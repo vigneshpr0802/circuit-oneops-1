@@ -26,7 +26,7 @@ resource "zookeeper",
          :design => true,
          :requires => {"constraint" => "1..1"},
          :attributes => {
-             'mirror' => "http://archive.apache.org/dist/zookeeper/"
+             'mirror' => "$OO_CLOUD{satproxy}/mirrored-assets/zookeeper/"
 
              },
           :monitors => {
