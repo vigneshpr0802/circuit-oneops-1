@@ -18,8 +18,9 @@
 
 cloud_name = node[:workorder][:cloud][:ciName]
 provider = node[:workorder][:services][:compute][cloud_name][:ciClassName].gsub("cloud.service.","").downcase
-
 Chef::Log.info("provider: #{provider} ..")
+node.set['cloud_provider'] = provider
+
 os_type = node[:workorder][:rfcCi][:ciAttributes][:ostype]
 Chef::Log.info("node[os_type]: #{os_type} ...")
 

@@ -1,3 +1,10 @@
+
+if node.cloud_provider =~ /azure/
+  package "ntp" do
+    action :install
+  end
+end
+
 cloud_name = node[:workorder][:cloud][:ciName]
 services = node[:workorder][:services]
 if services.nil?  || !services.has_key?(:ntp)
