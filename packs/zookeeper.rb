@@ -25,10 +25,7 @@ resource "zookeeper",
          :cookbook => "oneops.1.zookeeper",
          :design => true,
          :requires => {"constraint" => "1..1"},
-         :attributes => {
-             'mirror' => "$OO_CLOUD{satproxy}/mirrored-assets/zookeeper/"
-
-             },
+         :attributes => {},
           :monitors => {
              'zookeeperprocess' => {:description => 'ZookeeperProcess',
                            :source => '',
