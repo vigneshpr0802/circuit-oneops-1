@@ -1041,6 +1041,16 @@ resource 'daemon-proxy',
                   }
                 }
   }
+  
+  
+resource "job-docker-cleanup",
+  :cookbook => "oneops.1.job",
+  :design => true,
+  :requires => { "constraint" => "1..1" },
+  :attributes => {
+        :minute => "7",
+        :cmd => "/opt/oneops/docker-cleanup.sh"
+  }
         
 #
 # relations
@@ -1148,6 +1158,7 @@ end
   { :from => 'daemon-kubelet',    :to => 'kubernetes-node' },
   { :from => 'daemon-proxy',      :to => 'kubernetes-node' },
   { :from => 'kubernetes-node',   :to => 'docker_engine' },
+  { :from => 'job-docker-cleanup',:to => 'docker_engine' },
   { :from => 'kubernetes-node',   :to => 'compute' }
     ].each do |link|
   relation "#{link[:from]}::depends_on::#{link[:to]}",
@@ -1160,7 +1171,7 @@ end
 
 # managed_via
 [ 'os-master','etcd-master','kubernetes-master','user-master','system-container-apps',
-  'daemon-controller-manager', 'daemon-apiserver', 'daemon-scheduler'].each do |from|
+  'daemon-controller-manager', 'daemon-apiserver', 'daemon-scheduler', 'volume-etcd'].each do |from|
   relation "#{from}::managed_via::compute-master",
     :except => [ '_default' ],
     :relation_name => 'ManagedVia',
@@ -1169,7 +1180,7 @@ end
     :attributes    => { } 
 end
 
-[ 'kubernetes-node', 'daemon-kubelet', 'daemon-proxy'].each do |from|
+[ 'kubernetes-node', 'daemon-kubelet', 'daemon-proxy', 'job-docker-cleanup'].each do |from|
   relation "#{from}::managed_via::compute",
     :except => [ '_default' ],
     :relation_name => 'ManagedVia',

@@ -14,65 +14,72 @@ exit_with_err "Etcd #{version} is supported only on EL7 (RHEL/CentOS) or later."
 
 # check if yum etcd package is available for installation.
 # If not available, install by extracting the package file
-log 'Installing Etcd ...'
-if !is_pkg_avail?('etcd', version)
 
-  # download the package from mirror location
-  cookbook = node.app_name.downcase
-  base_url, file_name = get_pkg_location(cookbook)
-
-  binpath = "/tmp/#{file_name}"
-  extract_path = node.etcd.extract_path
-
-  remote_file binpath do
-    owner 'root'
-    group 'root'
-    mode 0755
-    source "#{base_url}/#{file_name}"
-  end
-
-  directory extract_path do
-    recursive true
-    action :delete
-  end
-
-  [node.etcd.working_location, node.etcd.conf_location, extract_path].each do |dir|
-    directory "#{dir}" do
-      user 'root'
+if is_installed?('etcd', version)
+  log "Already installed: #{version}"
+else
+  log 'Installing Etcd ...'
+  if !is_pkg_avail?('etcd', version)
+  
+    # download the package from mirror location
+    cookbook = node.app_name.downcase
+    base_url, file_name = get_pkg_location(cookbook)
+  
+    binpath = "/tmp/#{file_name}"
+    extract_path = node.etcd.extract_path
+    
+   
+  
+    remote_file binpath do
+      owner 'root'
       group 'root'
       mode 0755
+      source "#{base_url}/#{file_name}"
     end
+  
+    directory extract_path do
+      recursive true
+      action :delete
+    end
+  
+    [node.etcd.working_location, node.etcd.conf_location, extract_path].each do |dir|
+      directory "#{dir}" do
+        user 'root'
+        group 'root'
+        mode 0755
+      end
+    end
+  
+    # untar the package
+    bash "Untar #{file_name}" do
+      cwd extract_path
+      user 'root'
+      group 'root'
+      code "tar --overwrite -C #{extract_path} -xvf #{binpath} --strip-components=1"
+      returns 0
+    end
+  
+    # creating symlinks
+    link '/usr/bin/etcd' do
+      to '/opt/etcd/etcd'
+    end
+  
+    link '/usr/bin/etcdctl' do
+      to '/opt/etcd/etcdctl'
+    end
+  
+  else
+    # Package is available on OS yum repo.
+    log 'package_install' do
+      message "Installing the package Etcd-#{version} from OS yum repo..."
+    end
+  
+    package 'etcd' do
+      version version
+      action :install
+    end
+  
   end
-
-  # untar the package
-  bash "Untar #{file_name}" do
-    cwd extract_path
-    user 'root'
-    group 'root'
-    code "tar --overwrite -C #{extract_path} -xvf #{binpath} --strip-components=1"
-    returns 0
-  end
-
-  # creating symlinks
-  link '/usr/bin/etcd' do
-    to '/opt/etcd/etcd'
-  end
-
-  link '/usr/bin/etcdctl' do
-    to '/opt/etcd/etcdctl'
-  end
-
-else
-  # Package is available on OS yum repo.
-  log 'package_install' do
-    message "Installing the package Etcd-#{version} from OS yum repo..."
-  end
-
-  package 'etcd' do
-    version version
-    action :install
-  end
-
 end
 
 secure_command_args = ""

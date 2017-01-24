@@ -41,14 +41,17 @@ log 'package_install' do
   message "Installing the package #{docker_pkg}-#{docker_ver}-#{docker_rel} from OS repo..."
 end
 
-# install docker-engine-selinux first to avoid installing latest (1.13.0-1 - broken on centos7.2) 
-package "docker-engine-selinux" do
+# install docker-engine-selinux first to avoid installing latest (1.13.0-1 - broken on centos7.2)
+# use yum_package to allow downgrade
+yum_package "docker-engine-selinux" do
   version "#{docker_ver}-#{docker_rel}"
+  allow_downgrade true
   action :install
 end
 
-package "#{docker_pkg}" do
+yum_package "#{docker_pkg}" do
   version "#{docker_ver}-#{docker_rel}"
+  allow_downgrade true  
   action :install
 end
 
@@ -131,6 +134,14 @@ ruby_block 'verify-docker' do
   block do
     init_docker_client
   end
+end
+
+# cleanup dangling images and exited containers
+cookbook_file '/opt/oneops/docker-cleanup.sh' do
+  source 'docker-cleanup.sh'
+  owner 'root'
+  group 'root'
+  mode 0755
 end
 
 log 'Docker engine installation completed!'

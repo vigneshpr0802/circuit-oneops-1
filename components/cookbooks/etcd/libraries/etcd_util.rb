@@ -46,6 +46,15 @@ module Etcd
                          'to install from OS repo.'
       cmd.exitstatus == 0
     end
+    
+    def is_installed?(pkg_name, version)
+
+      installed_version = shell_out("#{pkg_name} --version | head -1 | awk '{print $3}'").stdout.chomp
+      Chef::Log.info "installed_version: #{installed_version}"
+      
+      version.include?(installed_version)
+    end    
+    
 
     # Returns mirror url for the given service. Will first look into
     # the component attributes for mirror url and then in the cloud

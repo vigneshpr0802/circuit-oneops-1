@@ -54,4 +54,12 @@ else
   include_recipe "kubernetes::node"  
 end
 
+# move from default weekly rotate w/ 4 week retention to daily rotate 3 day retention
+cookbook_file '/etc/logrotate.d/syslog' do
+  source 'syslog.logrotate'
+  owner 'root'
+  group 'root'
+  mode 0644
+end
+
 log 'Kubernetes install/update completed!'

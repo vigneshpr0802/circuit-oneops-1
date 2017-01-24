@@ -17,7 +17,7 @@ grouping 'bom',
 attribute 'version',
           :description => 'Version',
           :required => 'required',
-          :default => '2.3.5',
+          :default => '2.3.7',
           :format => {
               :important => true,
               :help => 'Etcd version',
