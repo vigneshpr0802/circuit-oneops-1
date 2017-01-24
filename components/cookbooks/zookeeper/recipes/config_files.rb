@@ -126,6 +126,8 @@ else
   end
 end
 
+node.set[:string_of_hostname] = zookeeper_hosts.keys.join(" ")
+
 # use explicit value if set, otherwise make the leader a server iff there are
 # four or more zookeepers kicking around
 

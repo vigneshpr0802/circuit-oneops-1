@@ -9,14 +9,14 @@
 zk_basename = "zookeeper-#{node[:zookeeper][:version]}"
 ci = node.workorder.rfcCi.ciAttributes;
 zk_base_url = ci['mirror']
-zk_download_url = "#{zk_base_url}"+"#{zk_basename}/"+"#{zk_basename}.tar.gz"
+zk_download_location = "#{zk_base_url}"+"#{zk_basename}/"+"#{zk_basename}.tar.gz"
 
-Chef::Log.info("download url from #{zk_download_url} ")
+Chef::Log.info("download url from #{zk_download_location} ")
 
 remote_file ::File.join(Chef::Config[:file_cache_path], "#{zk_basename}.tar.gz") do
   owner "root"
   mode "0644"
-  source zk_download_url
+  source zk_download_location
   action :create
 end
 
@@ -68,17 +68,7 @@ service "start-zookeeper-server" do
  # notifies :create, resources("ruby_block[zookeeper-server]"), :immediately
 end
 
-# Copy the monitoring script to machine, get list of IPs first
-nodes = node.workorder.payLoad.RequiresComputes
-string_of_ips = ""
-nodes.each do |n|   
-   if string_of_ips.length == 0
-     string_of_ips = n[:ciAttributes][:dns_record]
-   else
-     string_of_ips = string_of_ips + " " + n[:ciAttributes][:dns_record]      
-   end   
-  end
-Chef::Log.info(string_of_ips)
+Chef::Log.info(node[:string_of_hostname])
 
 Chef::Log.info("Copying monitoring script")
 check_cluster_health = '/opt/nagios/libexec/check_cluster_health.sh'
@@ -89,6 +79,6 @@ template check_cluster_health do
   mode "0755"
   #  action :create_if_missing
   variables({
-                :string_of_ips => string_of_ips                
+                :string_of_ips => node[:string_of_hostname]                
             })
 end

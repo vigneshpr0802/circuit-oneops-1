@@ -1,11 +1,11 @@
 #!/bin/bash
 
-clientPort="2181"
+clientPort=<%= node['zookeeper']['client_port'] %>
 declare -i returnCode=0
 declare -i num_active_nodes=0
 active_nodes=""
 
-declare -a ips=(<%= @string_of_ips %>)
+declare -a ips=(<%= @string_of_hostname %>)
 declare -i total_nodes=${#ips[@]}
 
 ## Iterate over all IPs
@@ -28,7 +28,9 @@ do
 		num_active_nodes=$(($num_active_nodes+1))
 		active_nodes="$active_nodes $ip(leader)"
 	elif [ "$srvrOut" == "observer" ]; then
-		not_used="true"	
+		not_used="true"
+    elif [ "$srvrOut" == "standalone" ]; then
+        num_active_nodes=$(($num_active_nodes+1))
 	else
 		#"ERROR: $ip is not a leader, follower or an observer, but returned 'imok' response"
 		returnCode=0
