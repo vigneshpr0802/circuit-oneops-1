@@ -544,8 +544,8 @@ resource 'kubernetes-node',
 
 resource "lb",
   :attributes => {
-    "listeners"     => '["any all any all"]',
-    "ecv_map"       => '{"all":"port-check"}'
+    "listeners"     => '["tcp 80 tcp 31111"]',
+    "ecv_map"       => '{"31111":"port-check"}'
   }
   
 resource "lb-master-certificate",
