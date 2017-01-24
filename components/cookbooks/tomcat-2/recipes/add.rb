@@ -84,6 +84,31 @@ if node['tomcat']['server']['https_nio_connector_enabled'] == 'true'
 end
 
 ###############################################################################
+# Shutdown and Disable old service if it exists
+###############################################################################
+
+service 'disable old tomcat service' do
+  provider Chef::Provider::Service::Systemd
+  service_name 'tomcat'
+  action [:stop, :disable]
+  only_if { ::File.exist?('/lib/systemd/system/tomcat.service') }
+end
+
+file 'remove old tomcat service symlink' do
+  path '/etc/systemd/system/tomcat.service'
+  action :delete
+  only_if { ::File.exist?('/etc/systemd/system/tomcat.service') }
+end
+
+file 'remove old tomcat service' do
+  path '/lib/systemd/system/tomcat.service'
+  action :delete
+  only_if { ::File.exist?('/lib/systemd/system/tomcat.service') }
+end
+
+
+
+###############################################################################
 # Run Install Cookbook for Tomcat Binaries
 ###############################################################################
 
@@ -307,18 +332,28 @@ template "#{node['tomcat']['scripts_dir']}/postshutdown.sh" do
 end
 
 
-template "/lib/systemd/system/tomcat.service" do
-      source 'init_systemd.erb'
-      cookbook 'tomcat-2'
-      owner 'root'
-      group 'root'
-      mode '0644'
-      notifies :run, 'execute[Load systemd unit file]', :immediately
+template 'tomcat service' do
+  path '/lib/systemd/system/tomcat.service'
+  source 'init_systemd.erb'
+  cookbook 'tomcat-2'
+  owner 'root'
+  group 'root'
+  mode '0644'
+  action :create
+end
+
+service 'tomcat service enable' do
+  provider Chef::Provider::Service::Systemd
+  service_name 'tomcat'
+  supports status: true
+  action :enable
+  only_if { ::File.exist?('/lib/systemd/system/tomcat.service') }
 end
 
 execute 'Load systemd unit file' do
   command 'systemctl daemon-reload'
-  action :nothing
+  action :run
+  only_if { ::File.exist?('/lib/systemd/system/tomcat.service') }
 end
 
 ###############################################################################
@@ -338,13 +373,6 @@ template '/opt/nagios/libexec/check_ecv.rb' do
   group 'oneops'
   mode '0755'
 end
-
-service 'tomcat' do
-  service_name 'tomcat'
-  supports :status => true, :start => true, :stop => true
-  action [:enable]
-end
-
 ###############################################################################
 # Additional Recipes
 #   These recipes will be called after the rest of the add.rb file is run.

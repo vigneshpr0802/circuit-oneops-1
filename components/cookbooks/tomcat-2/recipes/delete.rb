@@ -27,6 +27,18 @@ service "tomcat" do
   action [:stop, :disable]
 end
 
+file 'remove old tomcat service symlink' do
+  path '/etc/systemd/system/tomcat.service'
+  action :delete
+  only_if { ::File.exist?('/etc/systemd/system/tomcat.service') }
+end
+
+file 'remove old tomcat service' do
+  path '/lib/systemd/system/tomcat.service'
+  action :delete
+  only_if { ::File.exist?('/lib/systemd/system/tomcat.service') }
+end
+
 directory "#{node['tomcat']['config_dir']}" do
    recursive true
    action :delete

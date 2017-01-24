@@ -64,7 +64,9 @@ if source_url.empty?
 end
 
 source_list="#{source_url}#{node['tomcat']['tarball']}"
-shared_download_http source_list do
+Chef::Log.debug("downloading from #{source_list}")
+remote_file "tomcat binary download" do
+  source source_list
   path "#{node['tomcat']['download_destination']}"
   action :create
 end

@@ -18,7 +18,7 @@ attribute 'version',
           :format => {
               :important => true,
               :help => "Specify the version of Tomcat you wish to install.",
-              :form => {"field" => "select", "options_for_select" => [["8.5.6", "8.5.6"],["8.5.9", "8.5.9"]]},
+              :form => {"field" => "select", "options_for_select" => [["8.5.8", "8.5.8"],["8.5.9", "8.5.9"]]},
               :pattern => "[0-9\.]+",
               :category => "1.Global",
               :order => 1
