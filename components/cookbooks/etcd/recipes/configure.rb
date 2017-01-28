@@ -181,7 +181,9 @@ if volumes.size > 0 && !File.symlink?(data_dir)
   service 'etcd' do
     action :stop
   end
-  execute "mv #{data_dir}/* #{mount_point}"
+  execute "mv #{data_dir}/* #{mount_point}" do
+    returns [0,1]
+  end
   execute "rm -fr #{data_dir}"
   execute "ln -s #{mount_point} #{data_dir}"
 end
