@@ -48,7 +48,6 @@ module Etcd
     end
     
     def is_installed?(pkg_name, version)
-      return false if `#{pkg_name} --version 2>&1`.include?("command not found")
 
       installed_version = shell_out("#{pkg_name} --version | head -1 | awk '{print $3}'").stdout.chomp
       Chef::Log.info "installed_version: #{installed_version}"
