@@ -258,6 +258,14 @@ if (User-Exists -userName $userName) {
   $Computername = $env:COMPUTERNAME
   $ADSIComp = [adsi]"WinNT://$Computername"
   $NewUser = $ADSIComp.Create('User',$userName)
+
+  #generate a random password
+  [Reflection.Assembly]::LoadWithPartialName("System.Web")
+  $random_password = [System.Web.Security.Membership]::GeneratePassword(20,0) 
+  
+  #Set password on account
+  $NewUser.SetPassword(($random_password))
+
   $NewUser.SetInfo()
 
   $group = [ADSI]("WinNT://"+$env:COMPUTERNAME+"/administrators,group")

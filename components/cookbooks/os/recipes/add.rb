@@ -21,13 +21,11 @@ provider = node[:workorder][:services][:compute][cloud_name][:ciClassName].gsub(
 Chef::Log.info("provider: #{provider} ..")
 node.set['cloud_provider'] = provider
 
-os_type = node[:workorder][:rfcCi][:ciAttributes][:ostype]
-Chef::Log.info("node[os_type]: #{os_type} ...")
+ostype = node[:workorder][:rfcCi][:ciAttributes][:ostype]
+Chef::Log.info("OS type: #{ostype} ...")
 
 #Symlinks for windows
-if os_type =~ /windows/
-  execute "chown -R oneops:Administrators /var/log /var/lib /var/cache /var/run /etc /opt"
-  
+if ostype =~ /windows/
   ["etc","opt","var"].each do |dir_name|
     link "C:/#{dir_name}" do
       to "C:/cygwin64/#{dir_name}"
@@ -36,39 +34,28 @@ if os_type =~ /windows/
   end
 end
 
+#Perform common recipes (both linux and windows)
 include_recipe "os::time"
 include_recipe "os::perf_forwarder" 
 
-if os_type =~ /windows/
-  Chef::Log.info("os type is windows !")
-  
-  #install logrotate for windows
-  directory "C:/opscode/logrotate" do
-    recursive true
-  end
-  
-  cookbook_file "C:/opscode/logrotate/logrotate.exe" do
-    cookbook "os"
-	source "logrotate.exe"
-    owner "oneops"
-    group "Administrators"
-    mode 0770
-  end
-  
-  #schedule a daily task for logrotate
-  ps_code = '
-  $action = New-ScheduledTaskAction -Execute "C:\opscode\logrotate\logrotate.exe" -Argument "/etc/logrotate.d"
-  $trigger = New-ScheduledTaskTrigger -Daily -At 3am
-  Register-ScheduledTask -Action $action -Trigger $trigger -TaskName "Logrotate Daily" -Description "Daily rotation of logs"  -User "System"'
-  
-  powershell_script "Schedule logrotate daily" do
-    code ps_code
-    not_if "if (Get-ScheduledTask | Where-Object {$_.TaskName -like 'Logrotate Daily' }) {$true} else {$false}"
-  end
-  
+platform_name = node.workorder.box.ciName
+if(platform_name.size > 32)
+  platform_name = platform_name.slice(0,32) #truncate to 32 chars
+  Chef::Log.info("Truncated platform name to 32 chars : #{platform_name}")
+end
+node.set[:vmhostname] = platform_name+'-'+node["workorder"]["cloud"]["ciId"].to_s+'-'+node["workorder"]["rfcCi"]["ciName"].split('-').last.to_i.to_s+'-'+ node["workorder"]["rfcCi"]["ciId"].to_s
+node.set[:full_hostname] = node["vmhostname"]+'.'+node["customer_domain"]
+puts "***RESULT:hostname=#{node.vmhostname}"
+
+
+#Perform windows-specific recipes and exit
+if ostype =~ /windows/
+  include_recipe "os::logrotate_windows"
+  include_recipe "os::network_windows"
   return true
 end
-	
+
+#Perform non-windows recipes	
 # common plugins dir that components put their check scripts
 execute "mkdir -p /opt/nagios/libexec"
 

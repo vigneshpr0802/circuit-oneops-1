@@ -483,7 +483,7 @@ end
 #give windows some time to initialize - 4 min
 ruby_block 'wait for windows initialization' do
   block do
-      sleep 240
+      sleep 60
   end
 end if node[:ostype] =~ /windows/
 
