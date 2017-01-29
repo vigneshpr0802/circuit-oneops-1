@@ -1,36 +1,8 @@
-# Copyright 2016, Walmart Stores, Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
-#
-# storage::add
-#
-# adds block storage ... volume component will attach and create raid device and filesystem
-#
-
-
-# TODO: fix fog/aws devices to remove the /dev/[s|vx]d\d+ limitation
-# only 15*8 devices available from sdi1-sdp15 (efgh used for ephemeral)
-#
-
-# PGPDBAAS 2613 & 3322
 require File.expand_path('../../../azure_base/libraries/utils.rb', __FILE__)
-
-include_recipe 'shared::set_provider'
-
 require 'json'
+include_recipe 'shared::set_provider'
 provider = node['provider_class']
-
 size_config = node.workorder.rfcCi.ciAttributes["size"]
 size_scale = size_config[-1,1]
 size = size_config.to_i.to_s.to_i
@@ -41,32 +13,18 @@ else
   mode = "no-raid"
 end
 
-    Chef::Log.info("----------------------------------------------------------")
-    Chef::Log.info("Storage Requested : " + size_config)
-    Chef::Log.info("----------------------------------------------------------")
+Chef::Log.info("Storage Requested : " + size_config)
 
- if size_config == "-1"
-   Chef::Log.info("Skipping Storage Allocation Due to Size is -1")
-   return true
-  end
-
+if size_config == "-1"
+  Chef::Log.info("Skipping Storage Allocation Due to Size is -1")
+  return true
+end
 
 slice_count = node.workorder.rfcCi.ciAttributes["slice_count"].to_i
-if slice_count.nil?
-  slice_count = 1
-end
-
-
+slice_count = 1 if slice_count.nil?
 Chef::Log.info("size_scale: "+size_scale)
-if size_scale == "T"
-  size *= 1024
-end
-if size < 10
-  puts "***FAULT:FATAL=Minimum size should be 10G"
-  e = Exception.new("no backtrace")
-  e.set_backtrace(" ")
-  raise e
-end
+size *= 1024 if size_scale == "T"
+exit_with_error("Minimum volume size should be 10G") if size < 10
 
 if slice_count == 1
   slice_size = size.to_i
@@ -86,73 +44,44 @@ vols = Array.new
 old_slice_count = slice_count
 old_size = size
 if action == "update"
-  if mode != "no-raid"
-    puts "***FAULT:FATAL=Could not extend volume for raid mode. Recreate volumes in no-raid mode for volume extension support"
-    e = Exception.new("no backtrace")
-    e.set_backtrace("")
-    raise e
-  end
+  exit_with_error("Could not extend volume for raid mode. Recreate volumes in no-raid mode for volume extension support") if mode != "no-raid"
   if node.workorder.rfcCi.ciBaseAttributes.has_key?("size")
     old_size = node.workorder.rfcCi.ciBaseAttributes["size"]
   else
     Chef::Log.info("Storage requested is same as before. #{old_size}G")
     return true
   end
-  if node.workorder.rfcCi.ciBaseAttributes.has_key?("slice_count")
-    old_slice_count = node.workorder.rfcCi.ciBaseAttributes["slice_count"].to_i
-  end
+  old_slice_count = node.workorder.rfcCi.ciBaseAttributes["slice_count"].to_i if node.workorder.rfcCi.ciBaseAttributes.has_key?("slice_count")
   scale = old_size[-1,1]
   oldsize = old_size[0..-2].to_i
   size = size.to_i
   old_size = old_size.to_i
   if old_slice_count > slice_count
-    puts "***FAULT:FATAL=Slice count cant be decreased"
-    e = Exception.new("no backtrace")
-    e.set_backtrace("")
-    raise e
+    exit_with_error("Slice count cant be decreased")
   else
     slice_count = slice_count - old_slice_count
     if slice_count == 0
       slice_count = 1
     end
   end
-  if scale == "T"
-    old_size *= 1024
-  end
+  old_size *= 1024 if scale == "T"
   if size > old_size
     slice_size = size - old_size
-    if slice_size < 10
-      puts "***FAULT:FATAL=Size requested is too small"
-      e = Exception.new("no backtrace")
-      e.set_backtrace("")
-      raise e
-    end
+    exit_with_error("Size requested is too small") if slice_size < 10
   elsif size == old_size
     Chef::Log.info("Storage requested is same as before. #{old_size}G")
     return true
   else
-    puts "***FAULT:FATAL=Size of storage can not be decreased"
-    e = Exception.new("no backtrace")
-    e.set_backtrace("")
-    raise e
+    exit_with_error("Size of storage can not be decreased")
   end
-  if node.workorder.rfcCi.ciAttributes.has_key?("device_map")
-    vols = node.workorder.rfcCi.ciAttributes["device_map"].split(" ")
-  end
+  vols = node.workorder.rfcCi.ciAttributes["device_map"].split(" ") if node.workorder.rfcCi.ciAttributes.has_key?("device_map")
   if mode == "no-raid" || mode == "raid0"
     slice_size = (slice_size.to_f / slice_count.to_f).ceil
   else
     slice_size = (slice_size.to_f / slice_count.to_f).ceil*2
   end
 end
-if slice_size < 10
-  puts "***FAULT:FATAL=Minimum slice size should be 10G"
-  e = Exception.new("no backtrace")
-  e.set_backtrace(" ")
-  raise e
-end
-# fog/aws need to use sdf-sdp for ebs devices - e-h used by ephemeral
-# find the first unused block device
+exit_with_error("Minimum slice size should be 10G") if slice_size < 10
 
 # openstack+kvm doesn't use explicit device names, just set and order
 openstack_dev_set = ['b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v']
@@ -191,19 +120,12 @@ Array(1..slice_count).each do |i|
         :description => dev, :display_name => vol_name, :volume_type => node.volume_type_from_map
       volume.save
     rescue Excon::Errors::RequestEntityTooLarge => e
-      puts "***FAULT:FATAL="+JSON.parse(e.response[:body])["overLimit"]["message"]
-      e = Exception.new("no backtrace")
-      e.set_backtrace("")
-      raise e
+      exit_with_error(JSON.parse(e.response[:body])["overLimit"]["message"])
     rescue Exception => e
-      puts "***FAULT:FATAL="+e.message
-      e = Exception.new("no backtrace")
-      e.set_backtrace("")
-      raise e
+      exit_with_error(e.message)
     end
 
   when /rackspace/
-
     begin
       vol_name = node["workorder"]["rfcCi"]["ciName"]+"-"+node["workorder"]["rfcCi"]["ciId"].to_s
       volume = node.storage_provider.volumes.new :display_name => vol_name, :size => slice_size.to_i
@@ -211,7 +133,6 @@ Array(1..slice_count).each do |i|
     rescue Exception => e
       Chef::Log.info("exception: "+e.inspect)
     end
-
   when /ibm/
     volume = node.storage_provider.volumes.new({
       :name => node.workorder.rfcCi.ciName,
