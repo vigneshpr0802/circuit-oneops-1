@@ -10,8 +10,12 @@ Chef::Log.info("Stopping the nslcd service")
 `sudo killall -9  /usr/sbin/nslcd`
 
 user "#{node[:user][:username]}" do
+  action :remove
+end
+
+user "#{node[:user][:username]}" do
   comment node[:user][:description]
-  supports :manage_home => true
+  manage_home true
   home node[:user][:home]
   if node[:user][:system_user] == 'true'
     system true
@@ -22,7 +26,6 @@ user "#{node[:user][:username]}" do
 end
 
 group "#{node[:user][:username]}"
-
 
 username = node[:user][:username]
 
