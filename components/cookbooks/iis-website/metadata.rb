@@ -103,7 +103,7 @@ attribute 'runtime_version',
 }
 
 attribute 'identity_type',
-  :description => 'Indentity type',
+  :description => 'Identity type',
   :required    => 'required',
   :default     => 'ApplicationPoolIdentity',
   :format      => {
