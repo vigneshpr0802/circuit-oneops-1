@@ -33,7 +33,7 @@ def get_probes_from_wo
     ci = node.workorder.ci
   end
 
-  listeners = get_listeners_from_wo()
+  listeners = get_listeners()
 
 
   ecvs = Array.new
@@ -102,6 +102,19 @@ def get_probes(subscription_id, resource_group_name, lb_name)
 end
 
 def get_listeners_from_wo
+  listeners = Array.new
+
+  if node["loadbalancers"]
+    raw_data = node['loadbalancers']
+    raw_data.each do |listener|
+      listeners.push(listener)
+    end
+  end
+
+  return listeners
+end
+
+def get_listeners
   ci = {}
   if node.workorder.has_key?("rfcCi")
     ci = node.workorder.rfcCi
@@ -161,7 +174,7 @@ def get_loadbalancer_rules(env_name, platform_name, probes, frontend_ipconfig, b
     ci = node.workorder.ci
   end
 
-  listeners = get_listeners_from_wo()
+  listeners = get_listeners()
 
   listeners.each do |listener|
     lb_rule_name = "#{env_name}.#{platform_name}-#{listener[:vport]}_#{listener[:iport]}tcp-#{ci[:ciId]}-lbrule"
