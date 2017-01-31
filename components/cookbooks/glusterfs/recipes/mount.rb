@@ -30,27 +30,26 @@ ruby_block 'wait for volume info' do
   end
 end
 
-# run it as execute so it fails the recipe when it fails
-execute "mount filesystem #{parent[:ciName]} on #{ci.ciAttributes[:mount_point]}" do
-  command "mount.glusterfs localhost:/#{parent[:ciName]} #{ci.ciAttributes[:mount_point]}"
+ruby_block "mount filesystem #{parent[:ciName]} on #{ci.ciAttributes[:mount_point]}" do
+  block do
+    execute_command("mount.glusterfs localhost:/#{parent[:ciName]} #{ci.ciAttributes[:mount_point]}")
+  end
+  action :create
 end
 
-# run it in ruby block to capture stdout
 ruby_block "mounts" do
   block do
-    result = `cat /proc/mounts && df -k`
-    Chef::Log.info(result)
+    execute_command("cat /proc/mounts && df -k")
   end
   action :create
 end
 
 mount_point = ci.ciAttributes[:mount_point]
 ruby_block "mounts" do
-    # clear existing mount_point and add to fstab again to ensure update attributes
-    result = `grep -v #{mount_point} /etc/fstab > /tmp/fstab`
-    ::File.open("/tmp/fstab","a") do |fstab|
-        fstab.puts("localhost:/#{parent[:ciName]} #{mount_point} #{filesys}  defaults,_netdev 0 0")
-        Chef::Log.info("adding to fstab : localhost:/#{parent[:ciName]} #{mount_point} glusterfs  defaults,_netdev 0 0")
-    end
-    `mv /tmp/fstab /etc/fstab`
+  execute_command("grep -v #{mount_point} /etc/fstab > /tmp/fstab")
+  ::File.open("/tmp/fstab","a") do |fstab|
+    fstab.puts("localhost:/#{parent[:ciName]} #{mount_point} #{filesys}  defaults,_netdev 0 0")
+    Chef::Log.info("adding to fstab : localhost:/#{parent[:ciName]} #{mount_point} glusterfs  defaults,_netdev 0 0")
+  end
+  execute_command("mv /tmp/fstab /etc/fstab")
 end

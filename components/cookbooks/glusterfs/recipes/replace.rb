@@ -45,10 +45,6 @@ ruby_block "volume replace #{parent[:ciName]}" do
             Chef::Log.info(detach_res)
           end
         end
-    
-      end
-  
+      end  
    end
- end 
-
-# end
+ end

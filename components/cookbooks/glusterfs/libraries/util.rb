@@ -27,7 +27,7 @@ def execute_command(command, exit_out = true)
 	if $?.success?
 		Chef::Log.info("#{command} got successful. #{output}")
 	else
-        exit_with_error "#{command} got failed. #{output}" if exit_out
-        Chef::Log.warn("#{command} got failed. #{output}") if !exit_out
+		exit_with_error "#{command} got failed. #{output.gsub(/\n+/, '.')}" if exit_out
+		Chef::Log.warn("#{command} got failed. #{output.gsub(/\n+/, '.')}") if !exit_out
 	end
 end
