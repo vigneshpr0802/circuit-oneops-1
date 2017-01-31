@@ -654,8 +654,27 @@ resource "secgroup",
 resource "certificate",
          :cookbook => "oneops.1.certificate",
          :design => true,
-         :requires => { "constraint" => "0..*" },
-         :attributes => {}
+         :requires => { "constraint" => "0..*", 'services' => 'certificate' },
+         :attributes => {},
+         :monitors => {
+             'ExpiryMetrics' =>  { :description => 'ExpiryMetrics',
+                  :source => '',
+                  :chart => {'min'=>0, 'unit'=>'Per Minute'},
+                  :charts => [
+                    {'min'=>0, 'unit'=>'Current Count', 'metrics'=>["days_remaining"]}
+                  ],
+                  :cmd => 'check_cert!:::node.expiry_date_in_seconds:::',
+                  :cmd_line => '/opt/nagios/libexec/check_cert $ARG1$',
+                  :metrics =>  {
+                    'minutes_remaining'   => metric( :unit => 'count', :description => 'Minutes remaining to Expiry', :dstype => 'GAUGE'),
+                    'hours_remaining'   => metric( :unit => 'count', :description => 'Hours remaining to Expiry', :dstype => 'GAUGE'),
+                    'days_remaining'   => metric( :unit => 'count', :description => 'Days remaining to Expiry', :dstype => 'GAUGE')
+                  },
+                  :thresholds => {
+			  'cert-expiring-soon' => threshold('1m','avg','days_remaining',trigger('<=',30,1,1),reset('>',90,1,1))
+                  }
+                }
+        }	 
 
 
 resource "hostname",

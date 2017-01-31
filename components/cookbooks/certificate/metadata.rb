@@ -9,6 +9,19 @@ grouping 'default',
   :access => "global",
   :packages => [ 'base', 'mgmt.catalog', 'mgmt.manifest', 'catalog', 'manifest', 'bom' ]
 
+grouping 'bom',
+  :access => "global",
+  :packages => [ 'bom' ]
+
+attribute 'auto_provision',
+          :description => 'Auto Generate',
+          :default => 'false',
+          :format => {
+              :help => 'Auto provision the cert using Certificate Service',
+              :category => '1.Certificate',
+              :form => { 'field' => 'checkbox' },
+              :order => 1
+          }
 
 attribute 'key',
   :description => "Key",
@@ -16,10 +29,10 @@ attribute 'key',
   :encrypted => true,
   :default => "",
   :format => {
+    :filter => {'all' => {'visible' => 'auto_provision:eq:false && pfx_enable:eq:false'}},
     :help => 'Enter the certificate key content (Note: usually this is the content of the *.key file)',
     :category => '1.Certificate',
-    :order => 1,
-    :filter => {'all' => {'visible' => 'pfx_enable:eq:false'}}
+    :order => 2
   }
 
 attribute 'cert',
@@ -27,10 +40,10 @@ attribute 'cert',
   :data_type => "text",
   :default => "",
   :format => {
+    :filter => {'all' => {'visible' => 'auto_provision:eq:false && pfx_enable:eq:false'}},
     :help => 'Enter the certificate content to be used (Note: usually this is the content of the *.crt file)',
     :category => '1.Certificate',
-    :order => 2,
-    :filter => {'all' => {'visible' => 'pfx_enable:eq:false'}}
+    :order => 3
   }
 
 attribute 'cacertkey',
@@ -38,10 +51,10 @@ attribute 'cacertkey',
   :data_type => "text",
   :default => "",
   :format => {
+    :filter => {'all' => {'visible' => 'auto_provision:eq:false && pfx_enable:eq:false'}},
     :help => 'Enter the CA certificate keys to be used',
     :category => '1.Certificate',
-    :order => 3,
-    :filter => {'all' => {'visible' => 'pfx_enable:eq:false'}}
+    :order => 4
   }
 
 attribute 'passphrase',
@@ -51,7 +64,7 @@ attribute 'passphrase',
   :format => {
     :help => 'Enter the passphrase for the certificate key',
     :category => '1.Certificate',
-    :order => 4,
+    :order => 5,
     :filter => {'all' => {'visible' => 'pfx_enable:eq:false'}}
   }
 
@@ -60,10 +73,72 @@ attribute 'pkcs12',
   :default => 'false',
   :format => {
     :category => '1.Certificate',
-    :order => 5,
+    :order => 6,
     :form => { 'field' => 'checkbox' },
     :help => 'Directory path where the certicate files should be saved',
     :filter => {'all' => {'visible' => 'pfx_enable:eq:false'}}
+  }
+
+attribute 'expires_in',
+  :description => "Time remaining to expiry",
+  :format => {
+    :filter => {'all' => {'visible' => 'auto_provision:eq:false'}},
+    :category => '1.Certificate',
+    :order => 7,
+    :help => 'Expiry time for this certificate. y is for year, m for month, d for day.  Example: 1y, 12m, 365d',
+    :pattern => '^[0-9]+(y|m|d)$'
+  }
+
+attribute 'expires_on',
+  :description => "Expires on absolute date-time",
+  :grouping => 'bom',
+  :format => {
+    :filter => {'all' => {'visible' => 'auto_provision:eq:false'}},
+    :category => '1.Certificate',
+    :order => 8,
+    :help => 'Expires on this absolute date-time'
+  }
+
+attribute 'common_name',
+  :description => "Common Name",
+  :default => "",
+  :format => {
+    :pattern => '^[^.]*$',
+    :filter => {'all' => {'visible' => 'auto_provision:eq:true'}},
+    :help => 'Enter the common name for the certificate to be provisioned. Do not use dot (.) OneOps will append the domain. Use the field below to add specific SANs',
+    :category => '1.Certificate',
+    :order => 9 
+  }
+
+attribute 'san',
+  :description => "Subject Alternative Name",
+  :data_type => 'array',
+  :default => "",
+  :format => {
+    :filter => {'all' => {'visible' => 'auto_provision:eq:true'}},
+    :help => 'Enter the SANs (Subject Alternative Names) for the certificate to be provisioned',
+    :category => '1.Certificate',
+    :order => 10
+  }
+
+attribute 'external',
+  :description => "External (Internet Facing)",
+  :format => {
+    :filter => {'all' => {'visible' => 'auto_provision:eq:true'}},
+    :category => '1.Certificate',
+    :order => 11,
+    :form => { 'field' => 'checkbox' },
+    :help => 'Is Internet facing certificate'
+  }
+
+attribute 'domain',
+  :description => "Domain Name",
+  :default => "", 
+  :format => {
+    :filter => {'all' => {'visible' => 'auto_provision:eq:true'}},
+    :help => 'Required for internet facing cert. Optional field if requesting internal certificate',
+    :category => '1.Certificate',
+    :order => 12
   }
 
 attribute 'path',
@@ -108,3 +183,4 @@ attribute 'ssl_password',
               :filter => {'all' => {'visible' => 'pfx_enable:eq:true'}}
           }
 recipe "repair", "Repair"
+
