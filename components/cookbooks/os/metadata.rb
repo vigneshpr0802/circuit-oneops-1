@@ -304,3 +304,5 @@ recipe 'apply-security-compliance',
            :dataType => 'string'
          }
        }
+       
+recipe 'reconfig-network', "Reconfig Network"
