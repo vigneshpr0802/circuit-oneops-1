@@ -35,14 +35,13 @@ end
 ruby_block 'declare-restart' do
   block do
     puts "***REBOOT_FLAG***"
-	#puts "wrong reboot flag"
   end
   action :nothing
-  subscribes :run, 'powershell_script[Rename-Computer]'
-  subscribes :run, 'powershell_script[Join-Domain]'
+  subscribes :run, 'powershell_script[Rename-Computer]', :delayed
+  subscribes :run, 'powershell_script[Join-Domain]', :delayed
 end
   
 reboot 'perform-restart' do
-  action :reboot_now
-  subscribes :run, 'ruby_block[declare-restart]'
-end  
+  action :nothing
+  subscribes :request_reboot, 'ruby_block[declare-restart]'
+end

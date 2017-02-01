@@ -158,5 +158,9 @@ New-Item -ItemType Directory -Force -Path C:\cygwin64\etc\nagios\conf.d\
 New-Item C:\cygwin64\opt\oneops\rubygems_proxy -type file -force
 Set-Content C:\cygwin64\opt\oneops\rubygems_proxy $gemRepo
 
+#grant full access on Cygwin folders to oneops user
+@("\var\lib", "\var\cache", "\var\run", "\etc", "\opt") | % {takeown /F C:\Cygwin64$_ /D Y /R}
+@("\var\lib", "\var\cache", "\var\run", "\etc", "\opt") | % {icacls C:\Cygwin64$_ /grant oneops:`(OI`)`(CI`)F /T /C}
+
 Set-Location "C:\"
 Write-Output "End of windows install_base script"
