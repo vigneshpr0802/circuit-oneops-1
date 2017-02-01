@@ -86,7 +86,7 @@ resource 'java',
 
 
 resource "hostname",
-  :cookbook => "fqdn",
+  :cookbook => "oneops.1.fqdn",
   :design => true,
   :requires => {
     :constraint => "1..1",
