@@ -9,9 +9,7 @@ node.set[:user][:home] = home_dir && !home_dir.empty? ? home_dir : "/home/#{node
 Chef::Log.info("Stopping the nslcd service")
 `sudo killall -9  /usr/sbin/nslcd`
 
-user "#{node[:user][:username]}" do
-  action :remove
-end
+`userdel -f #{node[:user][:username]}`
 
 user "#{node[:user][:username]}" do
   comment node[:user][:description]
