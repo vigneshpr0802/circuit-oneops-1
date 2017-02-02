@@ -115,7 +115,7 @@ resource "chocolatey-package",
   },
   :attributes       => {
      :repository    => '',
-     :location      => 'https://chocolatey.org/api/v2/',
+     :location      => '',
      :install_dir   => '$OO_LOCAL{platform_deployment}',
      :as_user       => 'oneops',
      :as_group      => 'oneops',
