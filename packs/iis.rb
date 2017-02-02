@@ -85,6 +85,47 @@ end
 
 EOF
 
+chocolatey_package_configure_cmd=  <<-"EOF"
+
+package_name = node.artifact.repository
+file_extension = File.extname(node.artifact.location)
+uri = URI.parse(node.artifact.location)
+file_name = File.basename(uri.path)
+file_physical_path = ::File.join(artifact_cache_version_path, file_name)
+
+if file_extension != 'nupkg' and File.exist?(file_physical_path)
+ package_location = ::File.join(artifact_cache_version_path, "#\{package_name\}.nupkg")
+ ::File.rename(file_physical_path,package_location)
+end
+
+chocolatey_package package_name do
+  source artifact_cache_version_path
+  options "--ignore-package-exit-codes=3010"
+  action :install
+end
+
+EOF
+
+resource "chocolatey-package",
+  :cookbook      => "oneops.1.artifact",
+  :design        => true,
+  :requires      => {
+    :constraint  => "0..*",
+    :help        => "Installs chocolatey package"
+  },
+  :attributes       => {
+     :repository    => '',
+     :location      => 'https://chocolatey.org/api/v2/',
+     :install_dir   => '$OO_LOCAL{platform_deployment}',
+     :as_user       => 'oneops',
+     :as_group      => 'oneops',
+     :should_expand => 'false',
+     :configure     => chocolatey_package_configure_cmd,
+     :migrate       => '',
+     :restart       => ''
+}
+
+
 resource "nuget-package",
   :cookbook      => "oneops.1.artifact",
   :design        => true,
@@ -144,6 +185,7 @@ resource "volume",
 
 [ { :from => 'iis-website', :to => 'dotnetframework' },
   { :from => 'dotnetframework', :to => 'os' },
+  { :from => 'chocolatey-package', :to => 'volume' },
   { :from => 'nuget-package', :to => 'iis-website' } ].each do |link|
   relation "#{link[:from]}::depends_on::#{link[:to]}",
     :relation_name => 'DependsOn',
@@ -158,7 +200,7 @@ relation "iis-website::depends_on::certificate",
   :to_resource => 'certificate',
   :attributes => {"propagate_to" => "from", "flex" => false, "min" => 1, "max" => 1}
 
-[ 'iis-website', 'nuget-package', 'dotnetframework', 'volume', 'os' ].each do |from|
+[ 'iis-website', 'nuget-package', 'dotnetframework', 'chocolatey-package' , 'volume', 'os' ].each do |from|
   relation "#{from}::managed_via::compute",
     :except => [ '_default' ],
     :relation_name => 'ManagedVia',
