@@ -128,4 +128,4 @@ end
 unless node["tomcat"]["access_log_dir"].start_with?("/")
   node.set['tomcat']['access_log_dir'] = "/var/log/tomcat#{major_version}/"
 end
-Chef::Log.info("Installation type #{node[:tomcat][:install_type]} - aceess log #{node[:tomcat][:access_log_dir]}")
+Chef::Log.info("Installation type #{node[:tomcat][:install_type]} - access log #{node[:tomcat][:access_log_dir]}")

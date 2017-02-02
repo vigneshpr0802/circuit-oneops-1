@@ -11,3 +11,9 @@ def tom_ver
 		return "tomcat"+node[:tomcat][:version][0,1]
 	end
 end
+
+def exit_with_error(msg)
+	Chef::Log.error(msg)
+	puts "***FAULT:FATAL=#{msg}"
+	Chef::Application.fatal!(msg)
+end

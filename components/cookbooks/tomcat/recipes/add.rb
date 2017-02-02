@@ -96,8 +96,7 @@ when "repository"
 when "binary"
   include_recipe "tomcat::add_binary"
 else
-  Chef::Log.error("unsupported install_type: #{node.tomcat.install_type}")
-  exit 1
+  exit_with_error "unsupported install_type: #{node.tomcat.install_type}"
 end
 
 template "/etc/logrotate.d/tomcat" do
