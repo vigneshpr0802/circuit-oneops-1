@@ -18,7 +18,7 @@ grouping 'default',
 attribute 'http_port',
           :description => 'Default http port',
           :required    => 'required',
-          :default     => 9001,
+          :default     => '9001',
           :format      => {
             :help     => 'Port HTTP Server listens to',
             :category => '1.Server',

@@ -60,7 +60,7 @@ attribute 'ansible_role_version',
 attribute 'source_yaml',
           :description => 'Source YAML',
           :required => 'required',
-          :default => false,
+          :default => 'false',
           :format => {
             :help => 'Source Content',
             :category => '2.Role',
