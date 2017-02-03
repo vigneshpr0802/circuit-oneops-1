@@ -8,8 +8,8 @@ if node[:workorder][:services].has_key?("windows-domain")
   $username = '#{domain[:domain]}\\#{domain[:username]}'
   $credential = New-Object System.Management.Automation.PSCredential($username,$password)
   $newname = '#{node.vmhostname}'
-  Rename-Computer -NewName $newname -Force
-  Add-Computer -DomainName $domain -Credential $credential -Force -Options JoinWithNewName
+  Rename-Computer -NewName $newname -Force -ErrorAction Stop
+  Add-Computer -DomainName $domain -Credential $credential -Force -Options JoinWithNewName -ErrorAction Stop
   Start-Sleep -s 10"
 
   execute 'mkpasswd-oneops' do
@@ -25,7 +25,7 @@ if node[:workorder][:services].has_key?("windows-domain")
 else
   #rename windows VM
   powershell_script 'Rename-Computer' do
-    code "Rename-Computer -NewName '#{node[:vmhostname]}'"
+    code "Rename-Computer -NewName '#{node[:vmhostname]}' -ErrorAction Stop"
     not_if "hostname | grep #{node.vmhostname}"
   end
 end
