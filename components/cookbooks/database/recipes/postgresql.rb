@@ -16,12 +16,12 @@ else
   Chef::Log.info("receiver not running.")
 end
 
-bash "createuser" do
-  code <<-EOH
-    sudo -u postgres psql -a -c "DROP DATABASE #{dbname}"
-    sudo -u postgres psql -a -c "DROP USER #{username}"
-    sudo -u postgres psql -a -c "CREATE USER #{username} WITH PASSWORD '#{password}'"
-  EOH
+ruby_block "createuser" do
+  block do
+    execute_command("sudo -u postgres psql -a -c \"DROP DATABASE #{dbname}\"")
+    execute_command("sudo -u postgres psql -a -c \"DROP USER #{username}\"")
+    execute_command("sudo -u postgres psql -a -c \"CREATE USER #{username} WITH PASSWORD '#{password}'\"")
+  end
 end
 
 bash "createdb" do
@@ -33,18 +33,18 @@ end
 
 if node.database.has_key?("dbserver")
   unless node.database.dbserver.ciAttributes[:version].to_f >= 9.0
-    bash "plpgsql" do
-      code <<-EOH
-        sudo -u postgres psql -d #{dbname} -a -c "CREATE LANGUAGE plpgsql;"
-      EOH
+    ruby_block "plpgsql" do
+      block do
+        execute_command("sudo -u postgres psql -d #{dbname} -a -c \"CREATE LANGUAGE plpgsql;\"")
+      end
     end
   end
 end
 
 unless extra.empty?
-  bash "extra" do
-    code <<-EOH
-    sudo -u postgres psql -d #{dbname} -a -c "#{extra}"
-  EOH
+  ruby_block "Additional DB statements" do
+    block do
+      execute_command("sudo -u postgres psql -d #{dbname} -a -c \"#{extra}\"")
+    end
   end
 end
