@@ -19,9 +19,20 @@ user "#{node[:user][:username]}" do
   else
     shell node[:user][:login_shell] unless node[:user][:login_shell].empty?
   end
+  if node["etc"]["passwd"]["#{node[:user][:username]}"]
+    action :modify
+  else
+    action :create
+  end
 end
 
-group "#{node[:user][:username]}"
+group "#{node[:user][:username]}" do
+  if node["etc"]["group"]["#{node[:user][:username]}"]
+    action :modify
+  else
+    action :create
+  end
+end
 
 username = node[:user][:username]
 
