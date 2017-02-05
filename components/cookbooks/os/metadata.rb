@@ -52,6 +52,7 @@ attribute 'ostype',
     :category => '3.Operating System',
     :order => 1,
     :form => { 'field' => 'select', 'options_for_select' => [
+      ['Ubuntu 16.04','ubuntu-16.04'],      
       ['Ubuntu 14.04','ubuntu-14.04'],
       ['CentOS 7.0','centos-7.0'],
       ['CentOS 7.2','centos-7.2'],
