@@ -4,7 +4,6 @@ name "rails-nginx"
 description "Rails with Nginx"
 type "Platform"
 category "Web Application"
-ignore true
 
 environment "single", {}
 environment "redundant", {}
