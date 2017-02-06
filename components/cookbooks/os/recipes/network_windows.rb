@@ -25,7 +25,7 @@ if node[:workorder][:services].has_key?("windows-domain")
 else
   #rename windows VM
   powershell_script 'Rename-Computer' do
-    code "Rename-Computer -NewName '#{node[:vmhostname]}' -ErrorAction Stop"
+    code "Rename-Computer -NewName '#{node[:vmhostname]}' -Force -ErrorAction Stop"
     not_if "hostname | grep #{node.vmhostname}"
   end
 end
