@@ -62,4 +62,6 @@ if !expires_on.nil?
                 end
 
 	puts "***RESULT:expires_on=" + expires_on.to_s
+else
+        node.set[:expiry_date_in_seconds] = nil
 end
