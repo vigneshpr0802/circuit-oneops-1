@@ -19,7 +19,7 @@ attribute 'version',
               :help => 'Docker engine version',
               :category => '1.Binary',
               :order => 1,
-              :form => {:field => 'select', :options_for_select => [['1.9.1', '1.9.1'], ['1.10.2', '1.10.2'], ['1.11.2', '1.11.2'], [['1.12.6', '1.12.6']]]}
+              :form => {:field => 'select', :options_for_select => [['1.9.1', '1.9.1'], ['1.10.2', '1.10.2'], ['1.11.2', '1.11.2'], ['1.12.6', '1.12.6']]}
           }
 
 attribute 'repo',
