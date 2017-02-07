@@ -144,7 +144,7 @@ while setting_sshkey && retry_count < max_retry_count do
 
   rescue Exception => e
     
-    Chef::Log.info("Exception in setting up ssh key: "+e.inspect)        
+    Chef::Log.error("Exception in setting up ssh key: "+e.inspect)
     retry_count += 1
     sleep 60
   

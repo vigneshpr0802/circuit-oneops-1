@@ -127,9 +127,8 @@ ruby_block 'ssh config' do
       result = `service sshd restart`.to_i
 
       if result != 0
-        Chef::Log.error("new ssh config is bad. fix the sshd_config attribute. reverting and exiting.")
         `cp /etc/ssh/sshd_config.backup /etc/ssh/sshd_config ; service sshd restart`
-        exit 1
+        exit_with_error "new ssh config is bad. fix the sshd_config attribute. reverting and exiting."
       end
 
     end

@@ -8,9 +8,7 @@ end
 cloud_name = node[:workorder][:cloud][:ciName]
 services = node[:workorder][:services]
 if services.nil?  || !services.has_key?(:ntp)
-  Chef::Log.error('Please make sure your cloud has NTP service added.')
-  puts "***FAULT:FATAL=Missing NTP cloud service"
-  exit 1
+  exit_with_error "Please make sure your cloud has NTP service added."
 end
 
 ntp_service = services["ntp"][cloud_name]

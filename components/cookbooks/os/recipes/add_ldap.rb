@@ -6,8 +6,7 @@ cloud_name = node[:workorder][:cloud][:ciName]
 services = node[:workorder][:services]
 
 if services.nil?  || !services.has_key?(:ldap)
-  Chef::Log.error('Please make sure your cloud has Service LDAP added.')
-  exit 1
+  exit_with_error "Please make sure your cloud has Service LDAP added."
 end
 
 cloud_services = services["ldap"][cloud_name]
