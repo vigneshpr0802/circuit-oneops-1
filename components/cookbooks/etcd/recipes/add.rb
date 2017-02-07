@@ -28,8 +28,8 @@ else
     binpath = "/tmp/#{file_name}"
     extract_path = node.etcd.extract_path
     
+   Chef::Log.info("source url: #{base_url}/#{file_name}")
    
-  
     remote_file binpath do
       owner 'root'
       group 'root'

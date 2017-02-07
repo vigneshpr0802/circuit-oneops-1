@@ -17,9 +17,15 @@ include_recipe 'kubernetes::firewall'
 include_recipe 'kubernetes::go'
 include_recipe 'kubernetes::install'
 
+package "conntrack"
+
+case node.kubernetes.network
+when 'calico'  
+  include_recipe "kubernetes::calico" 
+end
 
 # generate kubernetes config file
-%w(config kubelet proxy).each do |file|
+%w(config kubelet proxy kubeconfig).each do |file|
   template "/etc/kubernetes/#{file}" do
     cookbook 'kubernetes'
     source "#{file}.erb"

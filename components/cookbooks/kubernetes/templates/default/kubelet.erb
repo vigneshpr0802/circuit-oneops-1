@@ -9,7 +9,15 @@ KUBELET_ADDRESS="--address=<%= node['kube']['kubelet']['bind-address'] %>"
 # The port for the info server to serve on
 KUBELET_PORT="--port=<%= node['kube']['kubelet']['bind-port'] %>"
 
-KUBELET_ARGS="<%= node['kube']['kubelet']['args'].strip %>"
+# network-plugin=cni
+<%
+net_args = ""
+if node.kubernetes.network == 'calico'
+  net_args = " --network-plugin=cni --network-plugin-dir=/opt/cni/bin"
+end
+%>
+
+KUBELET_ARGS="<%= node['kube']['kubelet']['args'].strip %><%= net_args %>"
 
 
 # security args

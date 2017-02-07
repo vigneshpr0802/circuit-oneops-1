@@ -52,8 +52,8 @@ module Etcd
       installed_version = shell_out("#{pkg_name} --version | head -1 | awk '{print $3}'").stdout.chomp
       Chef::Log.info "installed_version: #{installed_version}"
       
-      version.include?(installed_version)
-    end    
+      version == installed_version
+    end
     
 
     # Returns mirror url for the given service. Will first look into

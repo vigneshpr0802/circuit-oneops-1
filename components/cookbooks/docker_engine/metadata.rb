@@ -19,7 +19,7 @@ attribute 'version',
               :help => 'Docker engine version',
               :category => '1.Binary',
               :order => 1,
-              :form => {:field => 'select', :options_for_select => [['1.9.1', '1.9.1'], ['1.10.2', '1.10.2'], ['1.11.2', '1.11.2']]}
+              :form => {:field => 'select', :options_for_select => [['1.9.1', '1.9.1'], ['1.10.2', '1.10.2'], ['1.11.2', '1.11.2'], [['1.12.6', '1.12.6']]]}
           }
 
 attribute 'repo',
@@ -154,14 +154,14 @@ attribute 'limit_directives',
           
           
 attribute 'network',
-          :description => 'Network Overlay',
+          :description => 'Network',
           :default => 'none',
           :format => {
             :category => '7.Network',
-            :help => 'Network Overlay',
+            :help => 'Network Overlay/CNI',
             :form => {
               :field => 'select',
-              :options_for_select => [['none', 'none'], ['flannel', 'flannel']]
+              :options_for_select => [['none', 'none'], ['flannel', 'flannel'], ['calico', 'calico']]
             },
             :order => 1
           }          

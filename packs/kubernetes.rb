@@ -5,6 +5,14 @@ description  'Kubernetes'
 type         'Platform'
 category     'Infrastructure Service'
 
+variable 'docker-root-master',
+         :description => 'Root of the Docker runtime.',
+         :value => '/var/lib/docker'
+
+variable 'data-volume-master',
+         :description => 'Data volume for persistent or shared data.',
+         :value => '/data'
+
 
 resource 'secgroup',
   :attributes => {
@@ -31,7 +39,14 @@ resource 'secgroup-master',
       :inbound => '["22 22 tcp 0.0.0.0/0", 
                     "8080 8080 tcp 0.0.0.0/0", 
                     "2379 2380 tcp 0.0.0.0/0",
-                    "8472 8472 udp 0.0.0.0/0"]'
+                    "6443 6443 tcp 0.0.0.0/0",
+                    "8472 8472 udp 0.0.0.0/0",
+                    "2377 2377 tcp 0.0.0.0/0",
+                    "7946 7946 tcp 0.0.0.0/0",
+                    "7946 7946 udp 0.0.0.0/0",
+                    "4789 4789 tcp 0.0.0.0/0",
+                    "4789 4789 udp 0.0.0.0/0"      
+      ]'
   },
   :requires => {
       :constraint => '1..1',
@@ -228,7 +243,63 @@ resource 'etcd-master',
     }'
   }
  }
+
  
+# docker volume on master optional to not impact existing envs 
+# new envs should enable this to minimize root filesystem contention
+resource 'volume-docker-master',
+  :cookbook => 'oneops.1.volume',
+  :design => true,
+  :requires => {:constraint => '0..1', :services => 'compute'},
+  :attributes => {:mount_point => '/var/lib/docker',
+                  :size => '50%FREE',
+                  :fstype => 'xfs'
+  },
+  :monitors => {
+      :usage => {:description => 'Usage',
+                 :chart => {:min => 0, :unit => 'Percent used'},
+                 :cmd => 'check_disk_use!:::node.workorder.rfcCi.ciAttributes.mount_point:::',
+                 :cmd_line => '/opt/nagios/libexec/check_disk_use.sh $ARG1$',
+                 :metrics => {:space_used => metric(:unit => '%', :description => 'Disk Space Percent Used'),
+                              :inode_used => metric(:unit => '%', :description => 'Disk Inode Percent Used')},
+                 :thresholds => {
+                     :LowDiskSpaceCritical => threshold('1m', 'avg', 'space_used', trigger('>=', 90, 5, 2), reset('<', 85, 5, 1)),
+                     :LowDiskInodeCritical => threshold('1m', 'avg', 'inode_used', trigger('>=', 90, 5, 2), reset('<', 85, 5, 1))
+                 }
+      }
+  }
+   
+# optional block storage for docker on master 
+# if enabled change the 50%FREE in volume-docker-master in design to 100%FREE
+resource "storage-docker-master",
+  :cookbook => "oneops.1.storage",
+  :design => true,
+  :attributes => {
+    "size"        => '40G',
+    "slice_count" => '1'
+  },
+  :requires => { "constraint" => "0..1", "services" => "storage" },
+  :payloads => {
+    'volumes' => {
+     'description' => 'volumes',
+     'definition' => '{
+       "returnObject": false,
+       "returnRelation": false,
+       "relationName": "base.RealizedAs",
+       "direction": "to",
+       "targetClassName": "manifest.oneops.1.Storage",
+       "relations": [
+         { "returnObject": true,
+           "returnRelation": false,
+           "relationName": "manifest.DependsOn",
+           "direction": "to",
+           "targetClassName": "manifest.oneops.1.Volume"
+         }
+       ]
+     }'
+   }
+  }   
+  
 resource 'volume-etcd',
          :cookbook => 'oneops.1.volume',
          :design => true,
@@ -249,8 +320,8 @@ resource 'volume-etcd',
                             :LowDiskInodeCritical => threshold('1m', 'avg', 'inode_used', trigger('>=', 90, 5, 2), reset('<', 85, 5, 1))
                         }
              }
-         }
-  
+         }         
+           
 resource 'kubernetes-master',
   :cookbook => 'oneops.1.kubernetes',
   :requires => { "constraint" => "1..1", "services" => "*mirror" },
@@ -439,11 +510,80 @@ resource 'kubernetes-master',
                 
 }
 
-# tmp add back for old env deletion
-resource 'kubernetes-worker',
-  :cookbook => 'oneops.1.kubernetes',
-  :design => true,
-  :requires => { "constraint" => "0..1" }
+resource 'docker_engine-master',
+         :cookbook => 'oneops.1.docker_engine',
+         :design => true,
+         :requires => {:constraint => '1..1',
+                       :services => 'compute,*mirror'},
+         :attributes => {
+             :version => '1.11.2',
+             :root => '$OO_LOCAL{docker-root-master}',
+             :repo => '$OO_LOCAL{docker-repo}'
+         },
+         :monitors => {
+             :dockerProcess => {:description => 'DockerEngine',
+                                :source => '',
+                                :chart => {:min => '0', :max => '100', :unit => 'Percent'},
+                                :cmd => 'check_process!docker!true!docker!false',
+                                :cmd_line => '/opt/nagios/libexec/check_process.sh "$ARG1$" "$ARG2$" "$ARG3$" "$ARG4$"',
+                                :metrics => {
+                                    :up => metric(:unit => '%', :description => 'Percent Up'),
+                                },
+                                :thresholds => {
+                                    :dockerEngineDown => threshold('1m', 'avg', 'up', trigger('<=', 98, 1, 1), reset('>', 95, 1, 1), 'unhealthy')
+                                }
+             }
+         },
+        :payloads => {
+          # etcd computes for flannel
+          'etcd-computes' => {
+            'description' => 'etcd-computes',
+            'definition' => '{
+               "returnObject": false,
+               "returnRelation": false,
+               "relationName": "base.RealizedAs",
+               "direction": "to",
+               "targetClassName": "manifest.oneops.1.Docker_engine",
+               "relations": [
+                 { "returnObject": false,
+                   "returnRelation": false,
+                   "relationName": "manifest.Requires",
+                   "direction": "to",
+                   "targetClassName": "manifest.Platform",
+                   "relations": [
+                     { "returnObject": false,
+                       "returnRelation": false,
+                       "relationName": "manifest.Requires",
+                       "targetCiName": "kubernetes-master",
+                       "direction": "from",
+                       "targetClassName": "manifest.oneops.1.Etcd",
+                      "relations": [
+                        { "returnObject": false,
+                          "returnRelation": false,
+                          "relationName": "manifest.ManagedVia",
+                          "direction": "from",
+                          "targetClassName": "manifest.oneops.1.Compute",
+                          "relations": [
+                              { "returnObject": true,
+                                "returnRelation": false,
+                                "relationName": "base.RealizedAs",
+                                "direction": "from",
+                                "targetClassName": "bom.oneops.1.Compute"
+                              }
+                            ]
+
+                         }
+                       ]
+
+                     }
+                   ]
+                 }
+               ]
+            }'
+          }
+        }
+
+
 
 resource 'kubernetes-node',
   :cookbook => 'oneops.1.kubernetes',
@@ -560,8 +700,7 @@ resource "lb-master",
   :cookbook => "oneops.1.lb",
   :requires => { "constraint" => "1..1", "services" => "compute,lb,dns" },
   :attributes => {
-    "listeners"     => '["http 8080 http 8080",
-                         "http 80 http 8080"]',
+    "listeners"     => '["http 8080 http 8080"]',
     "ecv_map"       => '{"8080":"GET /api/"}'
   },
   :payloads => {
@@ -1051,7 +1190,17 @@ resource "job-docker-cleanup",
         :minute => "7",
         :cmd => "/opt/oneops/docker-cleanup.sh"
   }
-        
+  
+resource "job-docker-cleanup-master",
+  :cookbook => "oneops.1.job",
+  :design => true,
+  :requires => { "constraint" => "1..1" },
+  :attributes => {
+        :minute => "7",
+        :cmd => "/opt/oneops/docker-cleanup.sh"
+  }
+
+
 #
 # relations
 #
@@ -1149,7 +1298,14 @@ end
   { :from => 'etcd-master',       :to => 'compute-master' },
   { :from => 'etcd-master',       :to => 'os-master' },
   { :from => 'volume-etcd',       :to => 'os-master' },
-  { :from => 'etcd-master',       :to => 'volume-etcd' },
+  { :from => 'job-docker-cleanup-master', :to => 'docker_engine-master' },      
+  { :from => 'docker_engine-master', :to => 'volume-docker-master' },    
+  { :from => 'volume-etcd',       :to => 'volume-docker-master' },
+  { :from => 'docker_engine-master', :to => 'compute-master' },    
+  { :from => 'volume-docker-master', :to => 'compute-master' },
+  { :from => 'job-docker-cleanup-master', :to => 'compute-master' },
+  { :from => 'volume-docker-master', :to => 'storage-docker-master' },
+  { :from => 'etcd-master',       :to => 'volume-etcd' },    
   { :from => 'kubernetes-master', :to => 'etcd-master' },
   { :from => 'os-master',         :to => 'compute-master' },
   { :from => 'daemon-controller-manager', :to => 'kubernetes-master' },
@@ -1171,7 +1327,8 @@ end
 
 # managed_via
 [ 'os-master','etcd-master','kubernetes-master','user-master','system-container-apps',
-  'daemon-controller-manager', 'daemon-apiserver', 'daemon-scheduler', 'volume-etcd'].each do |from|
+  'daemon-controller-manager', 'daemon-apiserver', 'daemon-scheduler', 'volume-etcd', 
+  'volume-docker-master', 'docker_engine-master', 'job-docker-cleanup-master'].each do |from|
   relation "#{from}::managed_via::compute-master",
     :except => [ '_default' ],
     :relation_name => 'ManagedVia',

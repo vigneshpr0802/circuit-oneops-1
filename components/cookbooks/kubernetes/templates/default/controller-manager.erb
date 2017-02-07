@@ -16,12 +16,17 @@ KUBE_LOG_LEVEL="--v=<%= node.kubernetes.log_level %>"
 # security args
 <%
 args = []
-if node.workorder.rfcCi.ciAttributes.has_key?("security_enabled") &&
-   node.workorder.rfcCi.ciAttributes.security_enabled == "true"
+if node.kubernetes.has_key?("security_enabled") &&
+   node.kubernetes.security_enabled == "true"
 
-   kubernetes_tls_dir = node.workorder.rfcCi.ciAttributes.security_path
+   kubernetes_tls_dir = node.kubernetes.security_path
    args.push("--root-ca-file=#{kubernetes_tls_dir}/ca.crt")
    args.push("--service-account-private-key-file=#{kubernetes_tls_dir}/server.key")
 
-end %>
+end 
+
+if node.kubernetes.network == 'calico'
+  args.push("--cluster-cidr=#{node.kubernetes.pod_addresses}")
+end
+%>
 KUBE_AUTH_ARGS="<%= args.join(' ') %>"

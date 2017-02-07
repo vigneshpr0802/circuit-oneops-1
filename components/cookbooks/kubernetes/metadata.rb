@@ -98,16 +98,26 @@ attribute 'version',
 
 attribute 'network',
   :grouping => 'cluster',
-  :description => "Network overlay",
+  :description => "Network Plugin",
   :default => "flannel",
   :required => "required",
   :format => {
     :important => true,
-    :help => 'Network overlay - flannel or openvswitch',
+    :help => 'Network Plugin - calico or flannel',
     :category => '1.Shared',
+    :form => { 'field' => 'select', 'options_for_select' => [['flannel', 'flannel'],['calico', 'calico']] },
     :order => 2
   }
 
+attribute 'control_plane_repo',
+  :grouping => 'cluster',
+  :description => "Control Plane Repo",
+  :format => {
+    :help => 'Interface',
+    :category => '1.Shared',
+    :order => 3
+  }    
+  
 attribute 'api_port',
   :grouping => 'cluster',
   :description => "Insecure API port",
@@ -147,7 +157,7 @@ attribute 'log_level',
 attribute 'service_addresses',
   :grouping => 'cluster',
   :description => "service address cidr",
-  :default => "172.16.48.0/20",
+  :default => "172.16.48.0/21",
   :required => "required",
   :format => {
     :important => true,
@@ -156,6 +166,19 @@ attribute 'service_addresses',
     :order => 5
   }
 
+attribute 'pod_addresses',
+  :grouping => 'cluster',
+  :description => "pod address cidr",
+  :default => "172.16.56.0/21",
+  :required => "required",
+  :format => {
+    :important => true,
+    :help => 'service address cidr',
+    :category => '1.Master',
+    :order => 6
+  }
+  
+  
 attribute 'controller_manager_args',
   :grouping => 'cluster',
   :description => "Controller Manager Args",
@@ -166,7 +189,7 @@ attribute 'controller_manager_args',
     :important => true,
     :help => 'Controller Manager Args',
     :category => '1.Master',
-    :order => 6
+    :order => 7
   }
 
 attribute 'scheduler_args',
@@ -178,7 +201,7 @@ attribute 'scheduler_args',
   :format => {
     :help => 'Scheduler Args',
     :category => '1.Master',
-    :order => 7
+    :order => 8
   }
 
 attribute 'api_args',
@@ -190,7 +213,7 @@ attribute 'api_args',
   :format => {
     :help => 'API Args',
     :category => '1.Master',
-    :order => 8
+    :order => 9
   }
 
 attribute 'cluster_cloud_map',
@@ -214,7 +237,7 @@ attribute 'download_args',
   :format => {
     :help => 'Download Args for wget eg) --limit-rate 128k',
     :category => '1.Master',
-    :order => 10
+    :order => 11
   }
 
 
@@ -374,3 +397,4 @@ attribute 'interface',
     :category => '1.Worker',
     :order => 1
   }
+  

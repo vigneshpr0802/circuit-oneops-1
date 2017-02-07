@@ -16,7 +16,13 @@
 include_recipe 'kubernetes::firewall'
 include_recipe 'kubernetes::go'
 
+ci_index = node.workorder.rfcCi.ciName.split('-').last 
+
 case node.kubernetes.network
+when 'calico'
+  
+  include_recipe "kubernetes::calico"    
+  
 when 'flannel'
 
   # install flannel
@@ -43,8 +49,7 @@ when 'flannel'
   end  
   
   if node.workorder.payLoad.has_key?("manifest-docker")
-    docker = node.workorder.payLoad['manifest-docker'].first
-    ci_index = node.workorder.rfcCi.ciName.split('-').last  
+    docker = node.workorder.payLoad['manifest-docker'].first 
     if ci_index.to_i == 1    
       network_cidr = docker['ciAttributes']['network_cidr']
       Chef::Log.info("setting etcd flannel network: #{network_cidr}")
@@ -99,6 +104,7 @@ cookbook_file '/opt/nagios/libexec/check_pods.rb' do
   action :create
 end
 
+
 # master vip
 if node.workorder.payLoad.has_key?('lbmaster')  
   lb_map = {}
@@ -121,4 +127,22 @@ if node.workorder.payLoad.has_key?('lbmaster')
     returns [0,4]
   end    
   
+end
+
+# run only on the first master
+if ci_index.to_i == 1
+  # add dns and dashboard
+  files = %w(dns.yaml dashboard.yaml)
+  files.push 'calico-policy-controller.yaml' if node.kubernetes.network == 'calico'
+  files.each do |file|
+    template "/etc/kubernetes/#{file}" do
+      source "#{file}.erb"
+      owner 'root'
+      group 'root'
+      mode 0644
+    end
+    execute "kubectl create -f /etc/kubernetes/#{file}" do
+      returns [0,1]
+    end
+  end
 end
