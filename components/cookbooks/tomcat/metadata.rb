@@ -63,11 +63,10 @@ attribute 'build_version',
           :default => "70",
           :format => {
             :category => '1.Global',
-            :help => 'Tomcat minor version number. Example: Version=7, Build Version=70 will install Tomcat 7.0.70',
-            :order => 5
+            :help => 'Tomcat minor version number.  Example: Version=7, Build Version=62 will install Tomcat 7.0.62',
+            :order => 5,
+            :form => {'field' => 'select', 'options_for_select' => [['42', '42'], ['62', '62'], ['67', '67'], ['68', '68'], ['70', '70'], ['72', '72'], ['73', '73']]}
           }
-
-
 
 attribute 'webapp_install_dir',
           :description => "Webapps Directory",
@@ -82,7 +81,7 @@ attribute 'webapp_install_dir',
 attribute 'tomcat_user',
           :description => "User",
           :format => {
-              :help => 'System user to use for the tomcat process (Note: if empty will default to os-specific tomcat or tomcat version selected )',
+              :help => 'System user to use for the tomcat process (Note: if empty will default to os-specific tomcat)',
               :category => '2.Server',
               :order => 1
           }
@@ -90,7 +89,7 @@ attribute 'tomcat_user',
 attribute 'tomcat_group',
           :description => "Group",
           :format => {
-              :help => 'System group to use for the tomcat process (Note: if empty will default to os-specific tomcat or tomcat version selected )',
+              :help => 'System group to use for the tomcat process (Note: if empty will default to os-specific tomcat)',
               :category => '2.Server',
               :order => 2
           }
@@ -225,23 +224,12 @@ attribute 'context_enabled',
               :order => 14
  }
 
-attribute 'advanced_security_options',
-          :description => 'Advanced Security Options',
-          :default => 'false',
-          :format => {
-              :help => 'Display/Hide advanced security options.  Hiding the options does not disable or default the settings.',
-              :category => '2.Server',
-              :form => { 'field' => 'checkbox' },
-              :order => 15
-          }
-
 attribute 'tlsv1_protocol_enabled',
           :description => 'Enable TLSv1',
-          :default => 'true',
+          :default => 'false',
           :format => {
               :help => 'If SSL/TLS is enabled by adding a certificate and keystore, this attribute determines if the TLSv1 protocol and ciphers are enabled.  Enabling TLSv1 is considered a security vulnarability.  Only TLSv1.1 and above should be used in production.',
-              :category => '2.Server',
-              :filter => {'all' => {'visible' => 'advanced_security_options:eq:true'}},
+              :category => '3.Advanced Security',
               :form => { 'field' => 'checkbox' },
               :order => 16,
           }
@@ -251,8 +239,7 @@ attribute 'tlsv11_protocol_enabled',
           :default => 'true',
           :format => {
               :help => 'If SSL/TLS is enabled by adding a certificate and keystore, this attribute determines if the TLSv1.1 protocol and ciphers are enabled.',
-              :category => '2.Server',
-              :filter => {'all' => {'visible' => 'advanced_security_options:eq:true'}},
+              :category => '3.Advanced Security',
               :form => { 'field' => 'checkbox' },
               :order => 17,
           }
@@ -262,8 +249,7 @@ attribute 'tlsv12_protocol_enabled',
           :default => 'true',
           :format => {
               :help => 'If SSL/TLS is enabled by adding a certificate and keystore, this attribute determines if the TLSv1.2 protocol and ciphers are enabled.',
-              :category => '2.Server',
-              :filter => {'all' => {'visible' => 'advanced_security_options:eq:true'}},
+              :category => '3.Advanced Security',
               :form => { 'field' => 'checkbox' },
               :order => 18,
           }
@@ -273,19 +259,17 @@ attribute 'enable_method_get',
           :default => 'true',
               :format => {
               :help => 'Disable / Enable the get http method',
-              :category => '2.Server',
-              :filter => {'all' => {'visible' => 'advanced_security_options:eq:true'}},
+              :category => '3.Advanced Security',
               :form => { 'field' => 'checkbox' },
               :order => 19
           }
 
 attribute 'enable_method_put',
           :description => 'Enable PUT HTTP method',
-          :default => 'true',
+          :default => 'false',
               :format => {
               :help => 'Disable / Enable the put http method',
-              :category => '2.Server',
-              :filter => {'all' => {'visible' => 'advanced_security_options:eq:true'}},
+              :category => '3.Advanced Security',
               :form => { 'field' => 'checkbox' },
               :order => 20
           }
@@ -295,41 +279,37 @@ attribute 'enable_method_post',
           :default => 'true',
               :format => {
               :help => 'Disable / Enable the post http method',
-              :category => '2.Server',
-              :filter => {'all' => {'visible' => 'advanced_security_options:eq:true'}},
+              :category => '3.Advanced Security',
               :form => { 'field' => 'checkbox' },
               :order => 21
           }
 
 attribute 'enable_method_delete',
           :description => 'Enable DELETE HTTP method',
-          :default => 'true',
+          :default => 'false',
               :format => {
               :help => 'Disable / Enable the delete http method',
-              :category => '2.Server',
-              :filter => {'all' => {'visible' => 'advanced_security_options:eq:true'}},
+              :category => '3.Advanced Security',
               :form => { 'field' => 'checkbox' },
               :order => 22
           }
 
 attribute 'enable_method_connect',
           :description => 'Enable CONNECT HTTP method',
-          :default => 'true',
+          :default => 'false',
           :format => {
               :help => 'Disable / Enable the connect http method',
-              :category => '2.Server',
-              :filter => {'all' => {'visible' => 'advanced_security_options:eq:true'}},
+              :category => '3.Advanced Security',
               :form => { 'field' => 'checkbox' },
               :order => 23
           }
 
 attribute 'enable_method_options',
           :description => 'Enable OPTIONS HTTP method',
-          :default => 'true',
+          :default => 'false',
               :format => {
               :help => 'Disable / Enable the options http method',
-              :category => '2.Server',
-              :filter => {'all' => {'visible' => 'advanced_security_options:eq:true'}},
+              :category => '3.Advanced Security',
               :form => { 'field' => 'checkbox' },
               :order => 24
           }
@@ -339,8 +319,7 @@ attribute 'enable_method_head',
           :default => 'true',
               :format => {
               :help => 'Disable / Enable the head http method',
-              :category => '2.Server',
-              :filter => {'all' => {'visible' => 'advanced_security_options:eq:true'}},
+              :category => '3.Advanced Security',
               :form => { 'field' => 'checkbox' },
               :order => 25
           }
@@ -350,8 +329,7 @@ attribute 'enable_method_trace',
           :default => 'false',
               :format => {
               :help => 'Disable / Enable the trace http method. Note: this applies to HTTP, HTTPS, and AJP Connectors',
-              :category => '2.Server',
-              :filter => {'all' => {'visible' => 'advanced_security_options:eq:true'}},
+              :category => '3.Advanced Security',
               :form => { 'field' => 'checkbox' },
               :order => 26
           }
@@ -362,8 +340,7 @@ attribute 'server_header_attribute',
           :default => 'web',
           :format => {
               :help => 'Modify the value of the server attribute in the HTTP header.',
-              :category => '2.Server',
-              :filter => {'all' => {'visible' => 'advanced_security_options:eq:true'}},
+              :category => '3.Advanced Security',
               :order => 27,
               :editable => true
           }
@@ -373,8 +350,7 @@ attribute 'enable_error_report_valve',
           :default => 'true',
               :format => {
               :help => 'Disable / Enable the error report valve that hides data about the platform in default Tomcat generated error pages',
-              :category => '2.Server',
-              :filter => {'all' => {'visible' => 'advanced_security_options:eq:true'}},
+              :category => '3.Advanced Security',
               :form => { 'field' => 'checkbox' },
               :order => 28
           }
@@ -386,7 +362,7 @@ attribute 'executor_name',
           :default => 'tomcatThreadPool',
           :format => {
               :help => 'The name used to reference this pool in other places in server.xml. The name is required and must be unique.',
-              :category => '3.Executor',
+              :category => '4.Executor',
               :order => 1
           }
 
@@ -396,7 +372,7 @@ attribute 'max_threads',
           :default => '50',
           :format => {
               :help => 'The max number of active threads in this pool, default is 50',
-              :category => '3.Executor',
+              :category => '4.Executor',
               :order => 2,
               :pattern => '[0-9]+'
           }
@@ -407,7 +383,7 @@ attribute 'min_spare_threads',
           :default => '25',
           :format => {
               :help => 'The minimum number of threads always kept alive, default is 25',
-              :category => '3.Executor',
+              :category => '4.Executor',
               :order => 3,
               :pattern => '[0-9]+'
           }
@@ -418,7 +394,7 @@ attribute 'java_options',
           :default => "-Djava.awt.headless=true",
           :format => {
               :help => 'JVM command line options',
-              :category => '4.Java',
+              :category => '5.Java',
               :order => 1
           }
 
@@ -429,7 +405,7 @@ attribute 'system_properties',
           :format => {
               :important => true,
               :help => 'Key value pairs for -D args to the jvm',
-              :category => '4.Java',
+              :category => '5.Java',
               :order => 2
           }
 
@@ -439,7 +415,7 @@ attribute 'startup_params',
           :default => '["+UseConcMarkSweepGC"]',
           :format => {
               :help => '-XX arguments (without the -XX: in the values)',
-              :category => '4.Java',
+              :category => '5.Java',
               :order => 3
           }
 
@@ -449,7 +425,7 @@ attribute 'mem_max',
           :format => {
               :important => true,
               :help => 'Max Memory Heap Size',
-              :category => '4.Java',
+              :category => '5.Java',
               :order => 4
           }
 
@@ -458,16 +434,16 @@ attribute 'mem_start',
           :description => "Start Heap Size",
           :format => {
               :help => 'Start Memory Heap Size',
-              :category => '4.Java',
+              :category => '5.Java',
               :order => 5
           }
 
 attribute 'stop_time',
           :default => '45',
-          :description => "Specify the time limit to Shut down the  server .",
+          :description => "Specify the time limit to Shut down the Server .",
           :format => {
               :help => 'Stop(in seconds)',
-              :category => '4.Java',
+              :category => '5.Java',
               :order => 6,
               :pattern => "[0-9]+"
 
@@ -478,7 +454,7 @@ attribute 'use_security_manager',
           :description => "Use Security Manager",
           :default => "false",
           :format => {
-              :category => '5.Security',
+              :category => '6.Security',
               :order => 1,
               :help => '',
               :form => {'field' => 'checkbox'}
@@ -488,7 +464,7 @@ attribute 'policy',
           :description => "Policy",
           :data_type => 'text',
           :format => {
-              :category => '5.Security',
+              :category => '6.Security',
               :order => 2,
               :help => 'Local permissions and grants for tomcat web applications'
           },
@@ -503,7 +479,7 @@ attribute 'access_log_dir',
           :description => "Specify the directory in which access log files will be created .",
           :format => {
               :help => 'Specify the directory in which access log files will be created ',
-              :category => '6.Access Log',
+              :category => '7.Access Log',
               :order => 1
           }
 attribute 'access_log_prefix',
@@ -511,7 +487,7 @@ attribute 'access_log_prefix',
           :description => "Log File prefix. .",
           :format => {
               :help => 'Log file prefix. ',
-              :category => '6.Access Log',
+              :category => '7.Access Log',
               :order => 2
           }
 
@@ -520,7 +496,7 @@ attribute 'access_log_file_date_format',
           :description => "Date format to place in log file name.",
           :format => {
               :help => 'Specify the Log file date format. ',
-              :category => '6.Access Log',
+              :category => '7.Access Log',
               :order => 3
           }
 attribute 'access_log_suffix',
@@ -528,15 +504,15 @@ attribute 'access_log_suffix',
           :description => "The suffix to be  added to log file filenames.",
           :format => {
               :help => 'Specify the Log file suffix. ',
-              :category => '6.Access Log',
+              :category => '7.Access Log',
               :order => 4
           }
 attribute 'access_log_pattern',
-          :default => '%h %l %u %t &quot;%r&quot; %s %b %D %F',
+          :default => '%{NSC-client-ip}i | %t | Apache Tomcat | http://%{HOST}i%U%q | %a | %{X-Forwarded-For}i | %A | %p | %m | %{requestBodyLength}r | %D | %s | %B | %I | %H | %{Referer}i | %{User-Agent}i | %u | %{username}s | %{sessionTracker}s',
           :description => "Access log Formating layout ",
           :format => {
               :help => 'Specify the Log file pattern. ',
-              :category => '6.Access Log',
+              :category => '7.Access Log',
               :order => 5
           }
 
@@ -546,7 +522,7 @@ attribute 'pre_shutdown_command',
           :data_type => 'text',
           :format => {
               :help => 'Command to be executed before catalina stop is invoked. As an example in case of redundant environment, It can be used to post request (using curl)  which can trigger an ecv failure(response code 503). This will allow lb to take this instance out of traffic. ',
-              :category => '7.Advanced',
+              :category => '8.Advanced',
               :order => 1
           }
 
@@ -555,7 +531,7 @@ attribute 'time_to_wait_before_shutdown',
           :description => 'Time(in seconds) to wait after the pre shut down is executed. ',
           :format => {
               :help => 'Time it will wait before catalina stop is executed after execution of pre shut down.',
-              :category => '7.Advanced',
+              :category => '8.Advanced',
               :pattern => '[0-9]+',
               :order => 2
           }
@@ -566,7 +542,7 @@ attribute 'post_startup_command',
           :data_type => 'text',
           :format => {
               :help => 'Command to be executed after tomcat has been started. It should return 0 for successful execution and 1 for failure, which will cause tomcat startup to fail',
-              :category => '7.Advanced',
+              :category => '8.Advanced',
               :order => 3
           }
 
@@ -575,7 +551,7 @@ attribute 'polling_frequency_post_startup_check',
           :description => 'Time(in seconds) to wait before executing post start up command. ',
           :format => {
               :help => 'This will control at what frequency the post startup script will be executed.',
-              :category => '7.Advanced',
+              :category => '8.Advanced',
               :pattern => '[0-9]+',
               :order => 4
           }
@@ -585,7 +561,7 @@ attribute 'max_number_of_retries_for_post_startup_check',
           :description => 'Max. Number of retries for executing post startup command.  ',
           :format => {
               :help => 'The post start up script will be retried for max number of retries , executing the post start up script as per polling frequency ',
-              :category => '7.Advanced',
+              :category => '8.Advanced',
               :pattern => '[0-9]+',
               :order => 5
           }
