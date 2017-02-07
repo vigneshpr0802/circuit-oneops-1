@@ -38,7 +38,7 @@ if rfcAttrs.has_key?("mount_point") &&
     level :info
   end
 
-  execute_command("grep #{mount_point} /etc/mtab")
+  `grep #{mount_point} /etc/mtab`
   has_mounted = true if $? == 0
 
   case node[:platform]
@@ -81,10 +81,12 @@ if provider_class =~ /virtualbox|vagrant|docker/
   supported = false
 end
 storage = nil
-node.workorder.payLoad.DependsOn.each do |dep|
-  if dep["ciClassName"] =~ /Storage/
-    storage = dep
-    break
+if node.workorder.payLoad.has_key?('DependsOn')
+  node.workorder.payLoad.DependsOn.each do |dep|
+    if dep["ciClassName"] =~ /Storage/
+      storage = dep
+      break
+    end
   end
 end
 if storage == nil
