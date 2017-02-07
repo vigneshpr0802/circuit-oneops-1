@@ -29,10 +29,10 @@ end
 
 if expires_on.nil? || expires_in_value_changed == true #auto provision is turned off or this is first time deployment or user changed the expires_in value
 	expires_in = node[:certificate][:expires_in]
-	Chef::Log.info("expires_in value: " + expires_in)
 	if ((expires_in.nil? || expires_in.empty?) || ! (expires_in.end_with?("y") || expires_in.end_with?("m") || expires_in.end_with?("d")) || expires_in.length < 2 )
 		Chef::Log.info("expiry attribute empty or does not end with y|m|d")
 	else
+		Chef::Log.info("expires_in value: " + expires_in)
 		last_char = expires_in.slice(expires_in.split('').last)
 		Chef::Log.info("expires_in ends with: " + last_char.to_s)
 		expires_in=expires_in.chop #remove the last letter
