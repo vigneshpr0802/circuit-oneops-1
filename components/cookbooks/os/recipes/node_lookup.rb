@@ -40,7 +40,8 @@ if(platform_name.size > 32)
   Chef::Log.info("Truncated platform name to 32 chars : #{platform_name}")
 end
 
-node.set[:vmhostname] = platform_name+'-'+node.workorder.cloud.ciId.to_s+'-'+node["workorder"]["rfcCi"]["ciName"].split('-').last.to_i.to_s+'-'+ node["workorder"]["rfcCi"]["ciId"].to_s
+vmhostname = platform_name+'-'+node.workorder.cloud.ciId.to_s+'-'+node["workorder"]["rfcCi"]["ciName"].split('-').last.to_i.to_s+'-'+ node["workorder"]["rfcCi"]["ciId"].to_s
+node.set[:vmhostname] = vmhostname.downcase
 node.set[:server_name] = server_name
 node.set[:ostype] = ostype
 node.set[:size_id] = size_id
