@@ -57,7 +57,7 @@ resource "lb",
 resource "lb-certificate",
   :cookbook => "oneops.1.certificate",
   :design => true,
-  :requires => { "constraint" => "0..1", 'services' => 'certificate' },
+  :requires => { "constraint" => "0..1", 'services' => '*certificate' },
   :attributes => {}
 
 

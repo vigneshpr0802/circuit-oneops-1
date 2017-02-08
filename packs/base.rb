@@ -654,7 +654,7 @@ resource "secgroup",
 resource "certificate",
          :cookbook => "oneops.1.certificate",
          :design => true,
-         :requires => { "constraint" => "0..*", 'services' => 'certificate' },
+         :requires => { "constraint" => "0..*", 'services' => '*certificate' },
          :attributes => {},
          :monitors => {
              'ExpiryMetrics' =>  { :description => 'ExpiryMetrics',
