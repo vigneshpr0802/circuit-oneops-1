@@ -31,6 +31,7 @@ attribute 'key',
   :format => {
     :filter => {'all' => {'visible' => 'auto_provision:eq:false && pfx_enable:eq:false'}},
     :help => 'Enter the certificate key content (Note: usually this is the content of the *.key file)',
+    :tip => 'NOTE:  Certificate auto-provisioning depends on certificate cloud service. If auto-provisioning is ON, the deployment will FAIL for instances in clouds which do not have certificate service configured.',
     :category => '1.Certificate',
     :order => 2
   }
