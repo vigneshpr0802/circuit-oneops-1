@@ -69,8 +69,7 @@ attribute 'binding_port',
 
 attribute 'windows_authentication',
   :description => 'Windows authentication',
-  :default     => 'true',
-  :required    => 'required',
+  :default     => 'false',
   :format      => {
     :help      => 'Enable windows authentication',
     :category  => '1.IIS Web site',
@@ -81,7 +80,6 @@ attribute 'windows_authentication',
 attribute 'anonymous_authentication',
   :description => 'Anonymous authentication',
   :default     => 'true',
-  :required    => 'required',
   :format      => {
     :help      => 'Enable anonymous authentication',
     :category  => '1.IIS Web site',
@@ -94,7 +92,7 @@ attribute 'runtime_version',
 :required    => 'required',
 :default     => 'v4.0',
 :format      => {
-  :help      => 'The version of .Net CLR runtime that the appplication pool will use',
+  :help      => 'The version of .Net CLR runtime that the application pool will use',
   :category  => '2.IIS Application Pool',
   :order     => 1,
   :form      => { 'field' => 'select',
@@ -114,10 +112,33 @@ attribute 'identity_type',
                     'options_for_select' => [
                       ['Application Pool Identity', 'ApplicationPoolIdentity'],
                       ['Network Service', 'NetworkService'],
-                      ['Local Service', 'LocalService']
+                      ['Local Service', 'LocalService'],
+                      ['Specific User', 'SpecificUser']
                     ]
                   }
   }
+
+attribute 'process_model_user_name',
+  :description => 'Username',
+  :default     => '',
+  :format      => {
+  :help        => 'The user name of the account which application pool will use',
+    :category  => '2.IIS Application Pool',
+    :order     => 3,
+    :filter    => {'all' => {'visible' => 'identity_type:eq:SpecificUser'}}
+  }
+
+attribute 'process_model_password',
+  :description => 'Password',
+  :encrypted   => true,
+  :default     => '',
+  :format      => {
+  :help        => 'Password for the user account',
+    :category  => '2.IIS Application Pool',
+    :order     => 4,
+    :filter    => {'all' => {'visible' => 'identity_type:eq:SpecificUser'}}
+  }
+
 
 attribute 'enable_static_compression',
   :description => 'Enable static compression',

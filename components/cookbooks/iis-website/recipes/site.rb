@@ -42,6 +42,8 @@ end
 iis_app_pool platform_name do
   managed_runtime_version runtime_version
   process_model_identity_type identity_type
+  process_model_user_name site.process_model_user_name if identity_type == 'SpecificUser'
+  process_model_password site.process_model_password if identity_type == 'SpecificUser'
   action [:create, :update]
 end
 

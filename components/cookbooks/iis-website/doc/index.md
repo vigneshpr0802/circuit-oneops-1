@@ -66,8 +66,8 @@ In this section you configure application pool attributes
 
  Attribute              | Description                                                         | Notes   
  ---------              |-------------                                                        |-----    
- Net CLR version        | The version of .Net CLR runtime that the appplication pool will use | Default value: v4.0
- Indentity type         | Select the built-in account which application pool will use         | Default value: Application Pool Identity
+ .Net CLR version       | The version of .Net CLR runtime that the application pool will use  | Default value: v4.0
+ Identity type          | Select the built-in account which application pool will use         | Default value: Application Pool Identity
 
 ### IIS Static Compression
 In this section you configure static compression parameters
