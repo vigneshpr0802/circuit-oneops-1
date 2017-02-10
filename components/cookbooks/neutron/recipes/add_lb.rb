@@ -1,228 +1,115 @@
-# Copyright 2016, Walmart Stores, Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+require File.expand_path('../../libraries/models/lbaas/loadbalancer_model', __FILE__)
+require File.expand_path('../../libraries/models/lbaas/listener_model', __FILE__)
+require File.expand_path('../../libraries/models/lbaas/pool_model', __FILE__)
+require File.expand_path('../../libraries/models/lbaas/member_model', __FILE__)
+require File.expand_path('../../libraries/models/lbaas/health_monitor_model', __FILE__)
+require File.expand_path('../../libraries/models/tenant_model', __FILE__)
+require File.expand_path('../../libraries/loadbalancer_manager', __FILE__)
+require File.expand_path('../../libraries/network_manager', __FILE__)
 
-require 'excon'
 
-def wait_for_lb_state(conn,lb_name)
-  ok = false
-  # wait for ok
-  while !ok do
+def initialize_health_monitor(iprotocol, ecv_map, lb_name)
+  ecv = ecv_map.tr('"', '').tr('{}', '')
+  ecv_port, ecv_path = ecv.split(':', 2)
+  ecv_method, ecv_url = ecv_path.split(' ', 2)
 
-    lbs = JSON.parse(conn.request(:method => :get,
-    :path => "/v2.0/lbaas/loadbalancers.json?fields=id&name=#{lb_name}").body)["loadbalancers"]
+  health_monitor = HealthMonitorModel.new(iprotocol, 5, 2, 3)
+  health_monitor.label.name=lb_name + '-ecv'
+  health_monitor.http_method=ecv_method
+  health_monitor.url_path=ecv_url
 
-    if lbs.size < 1
-      Chef::Log.error("no lb: #{lb_name}")
-      exit 1
-    else
-      lb = lbs.first
-      Chef::Log.info("lb provisioning_status: #{lb['provisioning_status']}")
-      if lb['provisioning_status'] == "ACTIVE"
-        Chef::Log.info("active")
-        ok = true
-      else
-        Chef::Log.info("sleeping 30")
-        sleep 30
-      end
+  return health_monitor
+end
 
-    end
+def initialize_members(subnet_id, protocol_port)
+  members = Array.new
+  computes = node[:workorder][:payLoad][:DependsOn].select { |d| d[:ciClassName] =~ /Compute/ }
+  computes.each do |compute|
+    ip_address = compute["ciAttributes"]["private_ip"]
+    member = MemberModel.new(ip_address, protocol_port, subnet_id)
+    members.push(member)
   end
+
+  return members
 end
 
-cloud_name = node.workorder.cloud.ciName
-cloud_service = node[:workorder][:services][:lb][cloud_name]
-instances = Array.new
-computes = node.workorder.payLoad.DependsOn.select { |d| d[:ciClassName] =~ /Compute/ }
-computes.each do |compute|
-  instance_id = compute["ciAttributes"]["instance_id"]
-  instances.push(instance_id)
+def initialize_pool(iprotocol, lb_algorithm, lb_name, members, health_monitor, stickiness, persistence_type)
+  pool = PoolModel.new(iprotocol, lb_algorithm)
+  pool.label.name=lb_name + '-pool'
+  pool.members=members
+  pool.health_monitor=health_monitor
+
+  if stickiness == 'true'
+    session_persistence = SessionPersistenceModel.new(persistence_type)
+    pool.session_persistence = session_persistence.serialize_optional_parameters
+  end
+
+  return pool
 end
 
+def initialize_listener(vprotocol, vprotocol_port, lb_name, pool)
+  listener = ListenerModel.new(vprotocol, vprotocol_port)
+  listener.label.name=lb_name + '-listener'
+  listener.pool=pool
+
+  return listener
+end
+
+def initialize_loadbalancer(vip_subnet_id, provider, lb_name, listeners)
+  loadbalancer = LoadbalancerModel.new(vip_subnet_id, provider)
+  loadbalancer.label.name = lb_name
+  loadbalancer.listeners=listeners
+
+  return loadbalancer
+end
+
+#-------------------------------------------------------
+lb_attributes = node[:workorder][:rfcCi][:ciAttributes]
 cloud_name = node[:workorder][:cloud][:ciName]
-service = node[:workorder][:services][:lb][cloud_name][:ciAttributes]
+service_lb = node[:workorder][:services][:lb][cloud_name]
+service_lb_attributes = node[:workorder][:services][:lb][cloud_name][:ciAttributes]
+tenant = TenantModel.new(service_lb_attributes[:endpoint],service_lb_attributes[:tenant],
+                         service_lb_attributes[:username],service_lb_attributes[:password])
+service_compute_attributes = node[:workorder][:services][:compute][cloud_name][:ciAttributes]
+stickiness = lb_attributes[:stickiness]
+persistence_type = lb_attributes[:persistence_type]
+subnet_name = service_lb_attributes[:subnet_name]
+network_manager = NetworkManager.new(tenant)
+subnet_id = network_manager.get_subnet_id(subnet_name)
 
-user = {"username" => service[:username],
-        "password" => service[:password]}
+lb_name = ''
+listeners = Array.new
+#loadbalancers array contains a list of listeners from lb::build_load_balancers
+node.loadbalancers.each do |loadbalancer|
+  lb_name = loadbalancer[:name]
+  vprotocol = loadbalancer[:vprotocol]
+  vport = loadbalancer[:vport]
+  iprotocol = loadbalancer[:iprotocol]
+  iport = loadbalancer[:iport]
+  sg_name = loadbalancer[:sg_name]
 
-auth_req = {"auth" => {"tenantName" => service[:tenant],
-                       "passwordCredentials" => user}}
-
-host = service[:endpoint].gsub("/v2.0/tokens","")
-Chef::Log.info("endpoint: #{host}")
-conn = Excon.new(host, :ssl_verify_peer => false)
-resp = conn.request(:method=>:post, :path=> '/v2.0/tokens', :body => JSON.dump(auth_req))
-auth_token = JSON.parse(resp.body)['access']['token']['id']
-
-conn = Excon.new(service[:endpoint].gsub(":5000/v2.0/tokens",":9696"),
-  :ssl_verify_peer => false,
-  :headers => {
-    'Content-Type' => 'application/json',
-    'Accept'       => 'application/json',
-    'X-Auth-Token' => auth_token
-   })
-
-node.loadbalancers.each do |lb_def|
-
-  lb_name = lb_def[:name]
-  iport = lb_def[:iport]
-  Chef::Log.info("lb name: "+lb_name)
-
-  # loadbalancer
-  lb = nil
-  subnet = JSON.parse(conn.request(:method => :get,
-    :path => "/v2.0/subnets.json?fields=id&name=private-subnet").body)["subnets"].first
-
-  lbs = JSON.parse(conn.request(:method => :get,
-    :path => "/v2.0/lbaas/loadbalancers.json?fields=id&name=#{lb_name}").body)["loadbalancers"]
-  if lbs.size < 1
-    req = {:loadbalancer => {:name => lb_name, :vip_subnet_id => subnet['id'], :admin_state_up => true}}
-    lb = JSON.parse(conn.request(:method => :post,
-            :path => "/v2.0/lbaas/loadbalancers.json", :body => JSON.dump(req)).body)['loadbalancer']
-    puts "new lb: #{lb.inspect}"
+  if vprotocol == 'HTTPS' and iprotocol == 'HTTPS'
+    health_monitor = initialize_health_monitor('TCP', lb_attributes[:ecv_map], lb_name)
   else
-    lb = lbs.first
-    puts "existing lb: #{lb.inspect}"
+    health_monitor = initialize_health_monitor(iprotocol, lb_attributes[:ecv_map], lb_name)
   end
 
-  wait_for_lb_state(conn,lb_name)
+  members = initialize_members(subnet_id, iport)
+  pool = initialize_pool(iprotocol, lb_attributes[:lbmethod], lb_name, members, health_monitor, stickiness, persistence_type)
+  listeners.push(initialize_listener(vprotocol, vport, lb_name, pool))
+end
+loadbalancer = initialize_loadbalancer(subnet_id, service_lb_attributes[:provider], lb_name, listeners)
 
-  # listener
-  listener = nil
-  listener_name = lb_name.gsub(/-lb$/,"-listener")
-  listeners = JSON.parse(conn.request(:method => :get,
-    :path => "/v2.0/lbaas/listeners.json?fields=id&name=#{listener_name}").body)["listeners"]
-  if listeners.size < 1
-    req = {:listener => {:name => listener_name, :protocol_port => lb_def[:vport].to_i,
-              :protocol => lb_def[:vprotocol].upcase, :loadbalancer_id => lb['id'], :admin_state_up => true}}
-    listener = JSON.parse(conn.request(:method => :post,
-            :path => "/v2.0/lbaas/listeners.json", :body => JSON.dump(req)).body)['listener']
-    if listener.nil?
-      sleep 10
+lb_manager = LoadbalancerManager.new(tenant)
+Chef::Log.info("Creating Loadbalancer..." + lb_name)
+start_time = Time.now
+Chef::Log.info("start time " + start_time.to_s)
+loadbalancer_id = lb_manager.create_loadbalancer(loadbalancer)
+Chef::Log.info("end time " + Time.now.to_s)
+total_time = Time.now - start_time
+Chef::Log.info("Total time to create " + total_time.to_s)
 
-      listener = JSON.parse(conn.request(:method => :get,
-        :path => "/v2.0/lbaas/listeners.json?fields=id&name=#{listener_name}").body)["listeners"].first
-
-      if listener.nil?
-         puts "cannot get new listener: #{listener_name}"
-         exit 1
-      end
-
-    end
-
-    puts "new listener: #{listener.inspect}"
-  else
-    listener = listeners.first
-    puts "existing listener: #{listener.inspect}"
-  end
-
-  wait_for_lb_state(conn,lb_name)
-  
-  # pool
-  pool = nil
-  pool_name = lb_name.gsub(/-lb$/,"-pool")
-  lb_method = "ROUND_ROBIN"
-  
-  case node.workorder.rfcCi.ciAttribute.lbmethod
-  when "roundrobin"
-    lb_method = "ROUND_ROBIN"
-  when "leastconn"
-    lb_method = "LEAST_CONNECTIONS"      
-  end
-  iprotocol = lb_def[:iprotocol].upcase
-    
-  pools = JSON.parse(conn.request(:method => :get,
-    :path => "/v2.0/lbaas/pools.json?fields=id&name=#{pool_name}").body)["pools"]
-  if pools.size < 1
-    req = {:pool => {:name => pool_name, :lb_algorithm => lb_method, :listener_id => listener['id'],
-                     :protocol => iprotocol, :admin_state_up => true}}
-
-    pool = JSON.parse(conn.request(:method => :post,
-            :path => "/v2.0/lbaas/pools.json", :body => JSON.dump(req)).body)['pool']
-
-    if pool.nil?
-      sleep 10
-      pool = JSON.parse(conn.request(:method => :get,
-        :path => "/v2.0/lbaas/pools.json?fields=id&name=#{pool_name}").body)["pools"].first
-      if pool.nil?
-         puts "cannot get new pool: #{pool_name}"
-         exit 1
-      end
-    end
-
-    puts "new pool: #{pool.inspect}"
-  else
-    pool = pools.first
-    puts "existing pool: #{pool.inspect}"
-  end
-
-  wait_for_lb_state(conn,lb_name)
-
-  # members
-  members_resp = JSON.parse(conn.request(:method => :get,
-    :path => "/v2.0/lbaas/pools/#{pool['id']}/members.json").body)
-
-  members = []
-  if members_resp.has_key?("members")
-     members = members_resp["members"]
-  end
-
-  Chef::Log.info("members_resp: #{members_resp.inspect}")
-
-  lb_full = JSON.parse(conn.request(:method => :get,
-    :path => "/v2.0/lbaas/loadbalancers.json?id=#{lb['id']}").body)["loadbalancers"].first
-
-  stale_members = []
-  if !members.nil?
-    stale_members = members.clone
-  end
-
-  computes.each do |c|
-    is_missing = true
-    ip = c['ciAttributes']['private_ip']
-
-    member = nil
-    members.each do |m|
-      if m['address'] == ip
-         # not stale
-         is_missing = false
-         member = m
-      end
-    end
-
-    if is_missing
-      req = {:member => {:address => ip, :protocol_port => iport, :name => ip+":"+iport,
-       :subnet_id => subnet['id'],  :admin_state_up => true}}
-
-      member_name = ip+":"+iport
-      member = JSON.parse(conn.request(:method => :post, :name => member_name,
-              :path => "/v2.0/lbaas/pools/#{pool['id']}/members.json", :body => JSON.dump(req)).body)["member"]
-
-      if member.nil?
-        sleep 10
-        member = JSON.parse(conn.request(:method => :get, :name => member_name,
-              :path => "/v2.0/lbaas/pools/#{pool['id']}/members.json?name=#{member_name}", :body => JSON.dump(req)).body)["members"].first
-        if member.nil?
-          puts "cannot get new member: /v2.0/lbaas/pools/#{pool['id']}/members.json?name=#{member_name} "
-        end
-      end
-
-      puts "new member: #{member.inspect}"
-    else
-      puts "existing member: #{member.inspect}"
-    end
-  end
-
-  node.set["lb_dns_name"] = lb_full["vip_address"]
-
-end  
+lb = lb_manager.get_loadbalancer(loadbalancer_id)
+node.set[:lb_dns_name] = lb.vip_address
+Chef::Log.info("VIP Address: " + lb.vip_address.to_s)
+Chef::Log.info("Exiting neutron-lbaas add recipe.")
