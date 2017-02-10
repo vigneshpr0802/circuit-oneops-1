@@ -28,6 +28,9 @@ variable "drive_name",
   :description => 'drive name',
   :value       => 'E'
 
+resource "compute",
+         :attributes => {"size" => "M-WIN"}
+
 resource "iis-website",
   :cookbook     => "oneops.1.iis-website",
   :design       => true,
