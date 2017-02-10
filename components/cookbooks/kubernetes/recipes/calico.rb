@@ -3,6 +3,7 @@
 # 
 
 # shutdown flannel
+# TODO: factor to netcleanup recipe
 if File.exists?('/etc/sysconfig/flanneld')
   service 'flanneld' do
     action [:disable, :stop]
@@ -63,9 +64,9 @@ if node.workorder.services.has_key?("mirror") &&
   
 end
 
-calico_cni_version = "1.5.6"
+calico_cni_version = "1.5.5"
 %w(calico calico-ipam calicoctl).each do |file|
-  url = calico_mirror + "/calico-cni/releases/download/v#{calico_cni_version}/#{file}"
+  url = calico_mirror + "/cni-plugin/releases/download/v#{calico_cni_version}/#{file}"
   remote_file "/opt/cni/bin/#{file}" do
     source url
     owner 'root'
@@ -73,9 +74,29 @@ calico_cni_version = "1.5.6"
     mode '0755'
   end
 end
-  
+
+
+template "/opt/cni/pool.conf" do
+  source "calico-pool.conf.erb"
+  owner 'root'
+  group 'root'
+  mode 0644
+end
+
+execute "/opt/cni/bin/calicoctl create -f /opt/cni/pool.conf" do
+  environment 'ETCD_ENDPOINTS' => node['etcd']['servers']
+  returns [0,1]
+end
+
 directory "/etc/cni/net.d" do
   recursive true
+end
+
+template "/etc/cni/net.d/calico-kubeconfig" do
+  source "kubeconfig.erb"
+  owner 'root'
+  group 'root'
+  mode 0644
 end
 
 template "/etc/cni/net.d/10-calico.conf" do
@@ -85,11 +106,8 @@ template "/etc/cni/net.d/10-calico.conf" do
   mode 0644
 end
 
-
 execute "systemctl daemon-reload"
 
 service 'calico-node' do
-  action [:disable, :stop]
+  action [:enable, :restart]
 end
-
-

@@ -13,11 +13,11 @@ KUBELET_PORT="--port=<%= node['kube']['kubelet']['bind-port'] %>"
 <%
 net_args = ""
 if node.kubernetes.network == 'calico'
-  net_args = " --network-plugin=cni --network-plugin-dir=/opt/cni/bin"
+  net_args = "--network-plugin=cni --network-plugin-dir=/etc/cni/net.d "
 end
 %>
 
-KUBELET_ARGS="<%= node['kube']['kubelet']['args'].strip %><%= net_args %>"
+KUBELET_ARGS="<%= net_args %><%= node['kube']['kubelet']['args'].strip %>"
 
 
 # security args

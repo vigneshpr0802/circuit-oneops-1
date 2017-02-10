@@ -1,25 +1,21 @@
 {
     "name": "calico-k8s-network",
+    "hostname": "<%= node.hostname %>",
     "type": "calico",
     "etcd_endpoints": "<%= node['etcd']['servers'] %>",
     "log_level": "info",
     "ipam": {
-        "type": "calico-ipam",
-        "subnet": "usePodCidr"        
+        "type": "calico-ipam"
     },
     "policy": {
         "type": "k8s"
-    }
+    },
 <%
-lbs = node.workorder.payLoad.DependsOn.select { |d| d[:ciClassName] =~ /Lb/}
-# cannot use a name/fqdn or else will error with: unsupported protocol scheme
-master = "localhost"
-if lbs.size > 0
-  master = lbs.first['ciAttributes']['dns_record']
-end
-#       "kubeconfig": "/etc/kubernetes/kubeconfig"
-%> 
+mtu = "1360"
+%>
+    "mtu": <%= mtu %>,
     "kubernetes": {
-        "k8s_api_root": "http://<%= master %>:8080"        
+       "kubeconfig": "/etc/kubernetes/kubeconfig"
+
     }    
 }    

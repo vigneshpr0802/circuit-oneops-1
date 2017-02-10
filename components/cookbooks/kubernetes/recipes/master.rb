@@ -63,7 +63,7 @@ end
 include_recipe 'kubernetes::install'
 
 # generate kubernetes config files
-%w(apiserver config controller-manager scheduler auth_policy token_auth_users basic_auth_users ).each do |file|
+%w(apiserver config controller-manager scheduler auth_policy token_auth_users basic_auth_users kubeconfig proxy).each do |file|
   template "/etc/kubernetes/#{file}" do
     cookbook 'kubernetes'
     source "#{file}.erb"
@@ -75,7 +75,7 @@ include_recipe 'kubernetes::install'
 end
 
 # generate systemd files
-%w(kube-apiserver.service kube-controller-manager.service kube-scheduler.service).each do |service|
+%w(kube-apiserver.service kube-controller-manager.service kube-scheduler.service kube-proxy.service).each do |service|
   cookbook_file "/usr/lib/systemd/system/#{service}" do
     source service
     mode 00644
@@ -86,7 +86,7 @@ end
 execute "systemctl daemon-reload"
 
 # define kubernetes master services
-%w(kube-apiserver kube-controller-manager kube-scheduler).each do |service|
+%w(kube-apiserver kube-controller-manager kube-scheduler kube-proxy).each do |service|
   service service do
     action [:enable, :restart]
   end
@@ -129,20 +129,21 @@ if node.workorder.payLoad.has_key?('lbmaster')
   
 end
 
-# run only on the first master
-if ci_index.to_i == 1
-  # add dns and dashboard
-  files = %w(dns.yaml dashboard.yaml)
-  files.push 'calico-policy-controller.yaml' if node.kubernetes.network == 'calico'
-  files.each do |file|
-    template "/etc/kubernetes/#{file}" do
-      source "#{file}.erb"
-      owner 'root'
-      group 'root'
-      mode 0644
-    end
+# addons: dns and dashboard
+files = %w(dns.yaml dashboard.yaml)
+files.push 'calico-policy-controller.yaml' if node.kubernetes.network == 'calico'
+files.each do |file|
+  template "/etc/kubernetes/#{file}" do
+    source "#{file}.erb"
+    owner 'root'
+    group 'root'
+    mode 0644
+  end
+  # run only on the first master
+  if ci_index.to_i == 1
     execute "kubectl create -f /etc/kubernetes/#{file}" do
       returns [0,1]
     end
   end
+
 end

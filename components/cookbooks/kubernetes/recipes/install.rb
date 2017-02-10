@@ -12,7 +12,17 @@ if File.exists?(version_file)
   end
 end
 
+template "/etc/profile.d/kubernetes.sh" do
+  source 'kubernetes-profile.sh.erb'
+  owner 'root'
+  group 'root'
+  mode 0755
+end
+
+
 unless installed
+  
+  package "conntrack"
 
   # default to public, override using mirror cloud service
   mirror = "https://github.com/GoogleCloudPlatform"
