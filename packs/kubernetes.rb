@@ -25,7 +25,7 @@ resource 'secgroup',
 
 resource 'docker_engine',
          :attributes => {
-             :version => '1.11.2',
+             :version => '1.12.6',
              :root => '$OO_LOCAL{docker-root}',
              :repo => '$OO_LOCAL{docker-repo}',
              :network => 'flannel',
@@ -37,15 +37,8 @@ resource 'secgroup-master',
   :design => true,
   :attributes => {
       :inbound => '["22 22 tcp 0.0.0.0/0", 
-                    "8080 8080 tcp 0.0.0.0/0", 
-                    "2379 2380 tcp 0.0.0.0/0",
-                    "6443 6443 tcp 0.0.0.0/0",
-                    "8472 8472 udp 0.0.0.0/0",
-                    "2377 2377 tcp 0.0.0.0/0",
-                    "7946 7946 tcp 0.0.0.0/0",
-                    "7946 7946 udp 0.0.0.0/0",
-                    "4789 4789 tcp 0.0.0.0/0",
-                    "4789 4789 udp 0.0.0.0/0"      
+                    "1 65535 tcp 0.0.0.0/0",
+                    "1 65535 udp 0.0.0.0/0"    
       ]'
   },
   :requires => {
