@@ -762,8 +762,7 @@ end
   { :from => 'artifact',    :to => 'os' },    
   { :from => 'sensuclient', :to => 'compute'  },
   { :from => 'library',     :to => 'os' },
-  { :from => 'objectstore',  :to => 'compute'},
-  { :from => 'objectstore',  :to => 'user'}
+  { :from => 'objectstore',  :to => 'compute'}
 ].each do |link|
   relation "#{link[:from]}::depends_on::#{link[:to]}",
     :relation_name => 'DependsOn',

@@ -22,9 +22,3 @@ default[:swift][:username] = username
 default[:swift][:password] = password
 default[:swift][:authstrategy] = cloud_service[:ciAttributes][:authstrategy]
 default[:swift][:homepath]= '/etc'
-
-for entry in node.workorder.payLoad.DependsOn
-  if entry.ciAttributes.has_key?("home_directory")
-    default[:swift][:homepath]=entry.ciAttributes[:home_directory]
-  end
-end
