@@ -14,7 +14,7 @@ directory "#{node['javaservicewrapper']['working_dir']}" do
   group node['javaservicewrapper']['as_group']
   recursive true
   action :create
-  only_if { File.directory?(node['javaservicewrapper']['working_dir']) }
+  not_if { File.directory?(node['javaservicewrapper']['working_dir']) }
 end
 
 # generate the wrapper.conf
