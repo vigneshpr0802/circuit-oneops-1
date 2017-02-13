@@ -8,6 +8,7 @@ if payload.has_key?('DependsOn')
   depends_on = payload.DependsOn.select { |db| 
     db['ciClassName'].split('.').last == "Postgresql" || 
     db['ciClassName'].split('.').last == "Mysql" || 
+	db['ciClassName'].split('.').last == "Mssql" || 
     db['ciClassName'].split('.').last == "Oracle"  
   }
 end
@@ -16,7 +17,7 @@ db_type = ""
 case 
 when depends_on.size == 0
   pack_name = node.workorder.box.ciAttributes["pack"]
-  if pack_name =~ /postgres|oracle|mysql/
+  if pack_name =~ /postgres|oracle|mssql|mysql/
     db_type = pack_name
     Chef::Log.info("Using db_type: "+db_type+ " via box")
   else
