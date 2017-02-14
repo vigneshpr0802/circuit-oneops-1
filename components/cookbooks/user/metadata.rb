@@ -103,5 +103,14 @@ attribute 'authorized_keys',
     :category => '3.Access',
     :order => 1
   }
-
+  
+attribute 'windows_password',
+  :description => "Windows Password",
+  :encrypted => true,
+  :format => {
+    :help => 'Applies to Windows VMs only, if left blank a random password will be generated',
+    :category => '3.Access',
+    :order => 2
+  }
+  
 recipe "repair", "Repair User"
