@@ -26,7 +26,7 @@ lb_name = node[:lb_name]
 cloud_service = nil
 if !node.workorder.services["lb"].nil? &&
   !node.workorder.services["lb"][cloud_name].nil?
-  
+
   cloud_service = node.workorder.services["lb"][cloud_name]
 end
 
@@ -60,7 +60,7 @@ when /netscaler/
     action :nothing
   end
   n.run_action(:create)
-  
+
   include_recipe "netscaler::delete_lbvserver"
   include_recipe "netscaler::delete_servicegroup"
   include_recipe "netscaler::delete_server"
@@ -74,8 +74,11 @@ when /elb/
 
   include_recipe "elb::delete_lb"
 
-when /haproxy/  
+when /haproxy/
 
   include_recipe "haproxy::delete_lb"
-    
+
+when /neutron/
+
+  include_recipe "neutron::delete_lb"
 end
