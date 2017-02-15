@@ -52,9 +52,8 @@ when "fedora"
 
 when "redhat","centos"
 
-  default[:postgresql][:version] = "9.2"
-  set[:postgresql][:dir] = "/var/lib/pgsql/9.2/data"
-  set[:postgresql][:data] = "/var/lib/pgsql/9.2/data"
+  set[:postgresql][:dir] = "/var/lib/pgsql/#{node.postgresql.version}/data"
+  set[:postgresql][:data] = "/var/lib/pgsql/#{node.postgresql.version}/data"
 
 when "suse"
 

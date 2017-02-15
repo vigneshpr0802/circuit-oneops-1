@@ -18,7 +18,7 @@ attribute 'version',
     :help => 'Version of PostgreSQL',
     :category => '1.Global',
     :order => 1,
-    :form => { 'field' => 'select', 'options_for_select' => [['9.2','9.2']] },
+    :form => { 'field' => 'select', 'options_for_select' => [['9.2','9.2'],['9.6','9.6']] },
     :pattern => "[0-9\.]+"
   }
 

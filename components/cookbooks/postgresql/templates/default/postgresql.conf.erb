@@ -495,7 +495,9 @@
 #------------------------------------------------------------------------------
 # ONEOPS GENERATED
 #------------------------------------------------------------------------------
-<%- {
+<%- 
+
+default_set = {
   'data_directory' => "'#{node[:postgresql][:dir]}'",       # use data in another directory
   'hba_file' => "'#{node[:postgresql][:dir]}/pg_hba.conf'",   # host-based authentication file
   'ident_file' => "'#{node[:postgresql][:dir]}/pg_ident.conf'",    # ident configuration file
@@ -510,7 +512,15 @@
   'archive_mode' => "off",        # allows archiving to be done
   'archive_command' => "'cp \"%p\" #{node[:postgresql][:dir]}/archivedir/\"%f\"'",        # command to use to archive a logfile segment
   'default_text_search_config' => "'pg_catalog.english'"
-}.merge(JSON.parse(node.workorder.rfcCi.ciAttributes[:postgresql_conf])).each do |param,value| %>
+}
+
+if node['postgresql']['version'].to_f >= 9.4
+  default_set.delete('unix_socket_directory')
+end
+
+default_set.merge(JSON.parse(node.workorder.rfcCi.ciAttributes[:postgresql_conf])).each do |param,value| %>
+
+
 	<%= param %> = <%= value %>
 <% end %>
 <% if node[:postgresql][:version].to_f >= 9.0 %>

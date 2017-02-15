@@ -82,9 +82,9 @@ directory data_dir do
   recursive true
   mode 0700
 end
-
+flat_version = node.postgresql.version.split('.').join
 # try to add public repo - but os.repo_list could already have this setup for internal repo - ok if fails/exit code 1
-execute "rpm -ivh http://yum.postgresql.org/9.2/redhat/rhel-7-x86_64/pgdg-centos92-9.2-2.noarch.rpm" do
+execute "rpm -ivh http://yum.postgresql.org/#{node.postgresql.version}/redhat/rhel-7-x86_64/pgdg-centos#{flat_version}-#{node.postgresql.version}-3.noarch.rpm" do
   returns [0,1]
 end
 
