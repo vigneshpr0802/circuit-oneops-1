@@ -1,54 +1,57 @@
-include_pack "genericdb"
+include_pack 'genericdb'
 
-name "mssql"
-description "MS SQL Server"
-type "Platform"
-category "Database Relational SQL"
+name 'mssql'
+description 'MS SQL Server'
+type 'Platform'
+category 'Database Relational SQL'
 
 platform :attributes => {'autoreplace' => 'false'}
 
-environment "single", {}
+environment 'single', {}
 
-resource "secgroup",
-         :cookbook => "oneops.1.secgroup",
+resource 'secgroup',
+         :cookbook => 'oneops.1.secgroup',
          :design => true,
          :attributes => {
              "inbound" => '[ "22 22 tcp 0.0.0.0/0", "1433 1433 tcp 0.0.0.0/0", "3389 3389 tcp 0.0.0.0/0"]'
          },
          :requires => {
-             :constraint => "1..1",
+             :constraint => '1..1',
              :services => "compute"
          }
 
 
-resource "mssql",
-  :cookbook     => "oneops.1.mssql",
-  :design       => true,
-  :requires => { "constraint" => "1..1" }
+resource 'mssql',
+  :cookbook => 'oneops.1.mssql',
+  :design   => true,
+  :requires => {
+    :constraint => '1..1',
+	:services   => 'mirror'
+  }
   
 
-resource "os",
-  :cookbook => "oneops.1.os",
+resource 'os',
+  :cookbook => 'oneops.1.os',
   :design => true,
   :requires => { 
-    "constraint" => "1..1", 
-	"services" => "compute,*mirror,*ntp,*windows-domain" 
+    :constraint => '1..1',
+	:services   => 'compute,*mirror,*ntp,*windows-domain'
 	},
   :attributes => {
-	"ostype" => "windows_2012_r2"
+	:ostype => 'windows_2012_r2'
   }
 
-resource "dotnetframework",
-  :cookbook     => "oneops.1.dotnetframework",
+resource 'dotnetframework',
+  :cookbook     => 'oneops.1.dotnetframework',
   :design       => true,
   :requires     => {
-    :constraint => "1..1",
-    :help       => "Installs .net frameworks",
+    :constraint => '1..1',
+    :help       => 'Installs .net frameworks',
     :services   => '*mirror'
   },
   :attributes   => {
-    "chocolatey_package_source" => 'https://chocolatey.org/api/v2/',
-    "dotnet_version_package_name" => '{ ".Net 4.6":"dotnet4.6", ".Net 3.5":"dotnet3.5" }'
+    :chocolatey_package_source   => 'https://chocolatey.org/api/v2/',
+    :dotnet_version_package_name => '{ ".Net 4.6":"dotnet4.6", ".Net 3.5":"dotnet3.5" }'
   }  
   
 [ 

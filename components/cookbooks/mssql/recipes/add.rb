@@ -4,11 +4,33 @@
 #
 require 'uri'
 
-Chef::Log.info( "Microsoft SQL Server - Here we begin")
-Chef::Log.info( "version - #{node['sql_server']['version']}")
-Chef::Log.info( "url - #{node['sql_server']['server']['url']}")
+#Grab URL from the mirror service
+version_full = node['mssql']['version']
+cloud_name = node[:workorder][:cloud][:ciName]
+services = node[:workorder][:services]
 
-initial_url = node['sql_server']['server']['url']
+Chef::Log.info( "Installing MS SQL Server edition: #{version_full}")
+
+if services.has_key?(:mirror)
+  initial_url = JSON.parse(node[:workorder][:services][:mirror][cloud_name][:ciAttributes][:mirrors])[version_full]
+else
+  msg = 'Mirror service required for MS SQL!!!'
+  puts"***FAULT:FATAL=#{msg}"
+  e=Exception.new("#{msg}")
+  e.set_backtrace('')
+  raise e
+end
+
+if initial_url.nil? || initial_url.size == 0
+  msg = "Could not find url for #{version_full} in mirror service!!"
+  puts"***FAULT:FATAL=#{msg}"
+  e=Exception.new("#{msg}")
+  e.set_backtrace('')
+  raise e
+end
+
+Chef::Log.info( "url - #{initial_url}")
+
 uri = URI.parse(initial_url)
 ext = File.extname(uri.to_s)
 config_file_path = "#{Chef::Config[:file_cache_path]}/ConfigurationFile.ini"
