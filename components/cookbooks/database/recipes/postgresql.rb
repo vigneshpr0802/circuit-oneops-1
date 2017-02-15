@@ -18,8 +18,6 @@ end
 
 ruby_block "createuser" do
   block do
-    execute_command("sudo -u postgres psql -a -c \"DROP DATABASE #{dbname}\"")
-    execute_command("sudo -u postgres psql -a -c \"DROP USER #{username}\"")
     execute_command("sudo -u postgres psql -a -c \"CREATE USER #{username} WITH PASSWORD '#{password}'\"")
   end
 end
