@@ -1,3 +1,5 @@
+require 'securerandom'
+
 username = node[:user][:username]
 if node['platform'] =~ /windows/
   home_dir = "C:/Cygwin64/home/#{username}" 
@@ -11,6 +13,11 @@ end
 
 node.set[:user][:home] = home_dir && !home_dir.empty? ? home_dir : "/home/#{username}"
 
+#Generate random password if needed
+password = node[:user][:password]
+if password.nil? || password.size == 0
+  password = SecureRandom.urlsafe_base64(14)
+end
 
 user username do
   #Common attributes
@@ -21,7 +28,7 @@ user username do
   if node['platform'] =~ /windows/ 
     #Windows-specific attributes
     action :create
-	password node[:user][:windows_password]
+	password password
   else	
     #Non-Windows specific attributes
     if node[:user][:system_user] == 'true'

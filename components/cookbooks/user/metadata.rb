@@ -104,8 +104,8 @@ attribute 'authorized_keys',
     :order => 1
   }
   
-attribute 'windows_password',
-  :description => "Windows Password",
+attribute 'password',
+  :description => "Password (currently Windows only)",
   :encrypted => true,
   :format => {
     :help => 'Applies to Windows VMs only, if left blank a random password will be generated',
