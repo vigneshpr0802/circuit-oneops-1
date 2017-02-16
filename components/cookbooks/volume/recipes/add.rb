@@ -739,8 +739,8 @@ ruby_block 'ramdisk tmpfs' do
     `mount | grep #{_mount_point}`
     if $?.to_i == 0
       Chef::Log.info("device #{_device} for mount-point #{_mount_point} already mounted.Will unmount it.")
-      `umount #{_mount_point}`
-      Chef::Log.error("umount error: #{umount_res.to_s}") if $?.to_i != 0
+      result=`umount #{_mount_point}`
+      Chef::Log.error("umount error: #{result.to_s}") if result.to_i != 0
     end
 
     if _options == nil || _options.empty?
@@ -751,8 +751,8 @@ ruby_block 'ramdisk tmpfs' do
 
     # Make directory if not existing
     `mkdir -p #{_mount_point}`
-    `mount -t #{_fstype} -o size=#{size} #{_fstype} #{_mount_point}"`
-    Chef::Log.error("mount error: #{result.to_s}") if $?.to_i != 0
+    result=`mount -t #{_fstype} -o size=#{size} #{_fstype} #{_mount_point}"`
+    Chef::Log.error("mount error: #{result.to_s}") if result.to_i != 0
 
     # clear existing mount_point and add to fstab again to ensure update attributes and to persist the ramdisk across reboots
     execute_command("grep -v #{_mount_point} /etc/fstab > /tmp/fstab")
