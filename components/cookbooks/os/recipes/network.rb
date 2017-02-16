@@ -103,7 +103,7 @@ ruby_block 'setup bind and dhclient' do
     Chef::Log.info("nameservers: #{given_nameserver}")
 
     node.customer_domain
-    zone_domain = node.customer_domain
+    zone_domain = node.customer_domain.downcase
     dns_zone_found = false
     while !dns_zone_found && zone_domain.split(".").size > 2
       result = `dig +short NS #{zone_domain}`.to_s
@@ -177,7 +177,9 @@ ruby_block 'setup bind and dhclient' do
       end
     end
     customer_domains += "\"#{customer_domain}\""
+    customer_domains.downcase!
     customer_domains_dot_terminated += "#{customer_domain}."
+    customer_domains_dot_terminated.downcase!
 
     Chef::Log.info("supersede domain-search #{customer_domains}")
     dhcp_config_content = "supersede domain-search #{customer_domains};\n"
