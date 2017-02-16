@@ -713,10 +713,10 @@ ruby_block 'filesystem' do
 
       # in-line because of the ruby_block doesn't allow updated _device value passed to mount resource
       `mkdir -p #{_mount_point}`
-      execute_command("mount -t #{_fstype} -o #{_options} #{_device} #{_mount_point}")
+      `mount -t #{_fstype} -o #{_options} #{_device} #{_mount_point}`
 
       # clear and add to fstab again to make sure has current attrs on update
-      execute_command("grep -v #{_device} /etc/fstab > /tmp/fstab")
+      `grep -v #{_device} /etc/fstab > /tmp/fstab`
       ::File.open("/tmp/fstab","a") do |fstab|
         fstab.puts("#{_device} #{_mount_point} #{_fstype} #{_options} 1 1")
         Chef::Log.info("adding to fstab #{_device} #{_mount_point} #{_fstype} #{_options} 1 1")
@@ -755,7 +755,7 @@ ruby_block 'ramdisk tmpfs' do
     Chef::Log.error("mount error: #{result.to_s}") if result.to_i != 0
 
     # clear existing mount_point and add to fstab again to ensure update attributes and to persist the ramdisk across reboots
-    execute_command("grep -v #{_mount_point} /etc/fstab > /tmp/fstab")
+    `grep -v #{_mount_point} /etc/fstab > /tmp/fstab`
     ::File.open("/tmp/fstab","a") do |fstab|
       fstab.puts("#{_device} #{_mount_point} #{_fstype} #{_options},size=#{size}")
       Chef::Log.info("adding to fstab #{_device} #{_mount_point} #{_fstype} #{_options}")
