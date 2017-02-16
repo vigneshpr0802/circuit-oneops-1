@@ -99,7 +99,7 @@ node[:entries].each do |entry|
     Chef::Log.info("record: #{record_result.inspect}")
             
     if !verify(dns_name,dns_values,ns)
-      fail_with_error "could not verify: #{dns_name} to #{dns_values} on #{ns} after 5min."
+      fail_with_fault "could not verify: #{dns_name} to #{dns_values} on #{ns} after 5min."
     end
     
   end

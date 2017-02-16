@@ -161,7 +161,7 @@ ruby_block 'setup security groups' do
              when /\"code\": \d{3}+/
               error_key=JSON.parse(e.response[:body]).keys[0]
               msg = JSON.parse(e.response[:body])[error_key]['message']
-              exit_with_error "#{msg}"
+              exit_with_error "#{error_key} .. #{msg}"
              else
               msg = JSON.parse(e.response[:body])
               exit_with_error "#{msg}"

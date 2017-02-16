@@ -79,14 +79,10 @@ module Fqdn
       Chef::Log.debug("Provider is: #{provider}")  
       return provider
     end
-    
-    
+
     def fail_with_fault(msg)
-      Chef::Log.error(msg)
       puts "***FAULT:FATAL=#{msg}"
-      e = Exception.new("no backtrace")
-      e.set_backtrace("")
-      raise e      
+      Chef::Application.fatal!(msg)
     end
 
     # get dns value using dns_record attr or if empty resort to case stmt based on component class
