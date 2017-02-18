@@ -49,15 +49,15 @@ end
 if ::File.exists?("/opt/maven/bin/mvn") 
   Chef::Log.info("/opt/maven/bin/mvn exists.")                
 else  
-  _source_list = 'http://www.us.apache.org/dist/maven/maven-3/3.3.3/binaries/apache-maven-3.3.3-bin.tar.gz,'+
-                 'http://apache.osuosl.org/maven/maven-3/3.3.3/binaries/apache-maven-3.3.3-bin.tar.gz,'+
-                 'http://mirrors.ibiblio.org/apache/maven/maven-3/3.3.3/binaries/apache-maven-3.3.3-bin.tar.gz'
+  _source_list = 'http://www.us.apache.org/dist/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.tar.gz,'+
+                 'http://apache.osuosl.org/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.tar.gz,'+
+                 'http://mirrors.ibiblio.org/apache/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.tar.gz'
 
   misc_proxy = ENV["misc_proxy"]
   if !misc_proxy.nil?
-    _source_list = misc_proxy+"/dist/maven/maven-3/3.3.3/binaries/apache-maven-3.3.3-bin.tar.gz"
+    _source_list = misc_proxy+"/dist/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.tar.gz"
   end
-  _target = '/usr/src/maven-3.3.3.tar'
+  _target = '/usr/src/maven-3.3.9.tar'
   
   shared_download_http "#{_source_list}" do
     path _target
@@ -75,7 +75,7 @@ else
     cwd "/opt"
     code <<-EOH
     tar -xvf #{_target}
-    ln -sf apache-maven-3.3.3 maven
+    ln -sf apache-maven-3.3.9 maven
     ln -sf /opt/maven/bin/mvn /usr/local/bin/mvn
     EOH
     not_if { ::File.exists?('/usr/bin/mvn') }
