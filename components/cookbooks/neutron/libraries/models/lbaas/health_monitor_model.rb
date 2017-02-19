@@ -59,6 +59,7 @@ class HealthMonitorModel < BaseModel
   end
 
   def max_retries=(max_retries)
+    fail ArgumentError, 'max_retries is nil' if max_retries.nil?
     if max_retries.is_a?(Integer)
       if is_valid_max_retries(max_retries)
         @max_retries = max_retries
@@ -67,11 +68,13 @@ class HealthMonitorModel < BaseModel
   end
 
   def http_method=(http_method)
-      @http_method = validate_http_method(http_method)
+     if !http_method.nil? && !http_method.empty?
+       @http_method = validate_http_method(http_method)
+     end
   end
 
   def url_path=(url_path)
-    if !url_path.nil? || !url_path.empty?
+    if !url_path.nil? && !url_path.empty?
       @url_path = url_path
     end
   end
@@ -132,6 +135,7 @@ class HealthMonitorModel < BaseModel
 
   def validate_http_method(http_method)
     http_method_upcase = http_method.upcase
+
     if http_method_upcase == HttpMethod::GET || http_method_upcase == HttpMethod::POST || http_method_upcase == HttpMethod::PUT
       return http_method_upcase
     else
