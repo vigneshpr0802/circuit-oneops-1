@@ -31,7 +31,7 @@ dhclient_cmdline = dhclient_cmdline + " &"
 # Start dhclient again to get default values from dhcp server
 output = `#{dhclient_cmdline}`
 
-if node.["workorder"]["rfcCi"]["ciAttributes"]["dhclient"] != 'true'
+if node["workorder"]["rfcCi"]["ciAttributes"]["dhclient"] != 'true'
   `pkill -f dhclient`
 end
 
