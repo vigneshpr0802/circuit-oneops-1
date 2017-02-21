@@ -29,7 +29,14 @@ resource 'mssql',
 	:services   => 'mirror'
   }
   
+resource 'compute',
+  :cookbook => 'oneops.1.compute',
+  :attributes => { 'size'    => 'M-WIN' }
 
+resource 'volume',
+  :cookbook => 'oneops.1.volume',
+  :attributes => { 'mount_point'    => 'Z' }
+  
 resource 'os',
   :cookbook => 'oneops.1.os',
   :design => true,

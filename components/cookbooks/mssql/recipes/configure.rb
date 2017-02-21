@@ -74,6 +74,13 @@ registry_key "#{reg_prefix}\\SuperSocketNetLib\\Via" do
   notifies :restart, "service[#{service_name}]", :immediately
 end
 
+#open tcp port in firewall
+rule_name = "MSSQL: #{node['sql_server']['port']}"
+execute 'Open tcp port for MSSQL' do
+  command "netsh advfirewall firewall add rule name=\"#{rule_name}\" dir=in action=allow protocol=TCP localport=#{node['sql_server']['port']}"
+  not_if "netsh advfirewall firewall show rule name=\"#{rule_name}\""
+end 
+
 # If you have declared an agent account it will restart both the
 # agent service and the sql service. If not only the sql service
 if node['sql_server']['agent_startup'] == 'Automatic'
